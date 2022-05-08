@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline Visualization</title>
+    <script src="./pipeline.js"></script>
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+
+        table + table {
+            margin-top: 20px
+        }
+
+        td {
+            width: 20px;
+            max-width: 20px;
+            border: 1px solid black;
+            text-align: center;
+        }
+
+        .command {
+            width: 140px;
+            max-width: 140px;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .offset {
+            border: none;
+        }
+
+        .slow_instruction {
+            background: lightcoral;
+        }
+
+        .wait {
+            background-color: lightgray;
+        }
+
+        .dependency {
+            color: lightcoral;
+        }
+
+        .box {
+            float: left;
+            width: 14px;
+            height: 14px;
+        }
+    </style>
+</head>
+<body>
+    <details id="details" open>
+        <summary>Assembly / Instructions</summary>
+        <textarea id="textarea" cols="80" rows="40" placeholder="Copy output from 'objdump' here"></textarea>
+    </details>
+    <fieldset id="legend" style="display: none;">
+        <legend>Legend</legend>
+        <div class="box slow_instruction"></div>Memory instruction (slow)<br>
+        <div class="box wait"></div>Pipeline stall<br>
+        <div class="dependency">Argument depends on earlier instruction</div>
+    </fieldset>
+    <div id="out"></div>
+    <script>
+        function onInput(_e) {
+            const out = document.getElementById("out")
+            const textarea = document.getElementById("textarea")
+            const value = textarea.value
+            const tables = print_html(value)
+
+            out.innerHTML = ""
+            if (tables.length) {
+                tables.forEach(table => out.appendChild(table))
+                document.getElementById("legend").style.display = "block"
+            } else {
+                out.innerHTML = "<code>Encountered problems while parsing input</code>"
+                document.getElementById("legend").style.display = "none"
+            }
+
+            return tables.length
+        }
+
+        function closeDetails() {
+            setTimeout(() => {
+                if (onInput()) {
+                    document.getElementById("details").open = false
+                }
+            }, 200)
+        }
+
+        document.getElementById("textarea").addEventListener("input", onInput)
+
+        document.getElementById("textarea").addEventListener("paste", closeDetails)
+    </script>
+</body>
+</html>
