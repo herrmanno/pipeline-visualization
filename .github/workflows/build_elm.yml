@@ -27,4 +27,4 @@ jobs:
           elm-version: 0.19.1
 
       - name: Run build.sh
-        run: sh build.sh
+        run: build.sh
