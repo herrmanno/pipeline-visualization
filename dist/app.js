@@ -7401,6 +7401,7 @@ var $author$project$Main$ToggleInputArea = {$: 'ToggleInputArea'};
 var $author$project$Main$UpdateCode = function (a) {
 	return {$: 'UpdateCode', a: a};
 };
+var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -7432,6 +7433,7 @@ var $elm$html$Html$Attributes$cols = function (n) {
 		'cols',
 		$elm$core$String$fromInt(n));
 };
+var $author$project$Data$RISC$exampleCode = '\nbuild/debug/fib3.risc.o:     file format elf64-littleriscv\n\n\nDisassembly of section .text:\n\n0000000000000000 <fib>:\n\n#define LOOP (b = a + b, a = b - a)\n#define LOOP2 (LOOP, LOOP)\n#define LOOP4 (LOOP2, LOOP2)\n\nuint64_t fib(uint32_t n) {\n   0:	7179                	addi	sp,sp,-48\n   2:	f422                	sd	s0,40(sp)\n   4:	f026                	sd	s1,32(sp)\n   6:	ec4a                	sd	s2,24(sp)\n   8:	1800                	addi	s0,sp,48\n   a:	87aa                	mv	a5,a0\n   c:	fcf42e23          	sw	a5,-36(s0)\n    register uint64_t t = 0;\n    register uint64_t a = 0;\n  10:	4901                	li	s2,0\n    register uint64_t b = 1;\n  12:	4485                	li	s1,1\n\n0000000000000014 <.L2>:\n\n    start:\n    if (n <= 1) {\n  14:	fdc42783          	lw	a5,-36(s0)\n  18:	0007871b          	sext.w	a4,a5\n  1c:	4785                	li	a5,1\n  1e:	00e7e463          	bltu	a5,a4,26 <.L3>\n        return a;\n  22:	87ca                	mv	a5,s2\n  24:	a099                	j	6a <.L6>\n\n0000000000000026 <.L3>:\n    } else if (n > 4) {\n  26:	fdc42783          	lw	a5,-36(s0)\n  2a:	0007871b          	sext.w	a4,a5\n  2e:	4791                	li	a5,4\n  30:	02e7f463          	bgeu	a5,a4,58 <.L5>\n        LOOP4;\n  34:	94ca                	add	s1,s1,s2\n  36:	41248933          	sub	s2,s1,s2\n  3a:	94ca                	add	s1,s1,s2\n  3c:	41248933          	sub	s2,s1,s2\n  40:	94ca                	add	s1,s1,s2\n  42:	41248933          	sub	s2,s1,s2\n  46:	94ca                	add	s1,s1,s2\n  48:	41248933          	sub	s2,s1,s2\n        n -= 4;\n  4c:	fdc42783          	lw	a5,-36(s0)\n  50:	37f1                	addiw	a5,a5,-4\n  52:	fcf42e23          	sw	a5,-36(s0)\n        goto start;\n  56:	bf7d                	j	14 <.L2>\n\n0000000000000058 <.L5>:\n    } else {\n        LOOP;\n  58:	94ca                	add	s1,s1,s2\n  5a:	41248933          	sub	s2,s1,s2\n        n -= 1;\n  5e:	fdc42783          	lw	a5,-36(s0)\n  62:	37fd                	addiw	a5,a5,-1\n  64:	fcf42e23          	sw	a5,-36(s0)\n        goto start;\n  68:	b775                	j	14 <.L2>\n\n000000000000006a <.L6>:\n    }\n}\n  6a:	853e                	mv	a0,a5\n  6c:	7422                	ld	s0,40(sp)\n  6e:	7482                	ld	s1,32(sp)\n  70:	6962                	ld	s2,24(sp)\n  72:	6145                	addi	sp,sp,48\n  74:	8082                	ret\n';
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $elm$html$Html$h4 = _VirtualDom_node('h4');
 var $elm$html$Html$hr = _VirtualDom_node('hr');
@@ -7559,7 +7561,18 @@ var $author$project$Main$viewInputArea = function (model) {
 										$elm$html$Html$Attributes$value(model.code),
 										$elm$html$Html$Events$onInput($author$project$Main$UpdateCode)
 									]),
-								_List_Nil)
+								_List_Nil),
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Events$onClick(
+										$author$project$Main$UpdateCode($author$project$Data$RISC$exampleCode))
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Load example program')
+									]))
 							])),
 						A2(
 						$elm$html$Html$div,
