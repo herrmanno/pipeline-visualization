@@ -1,2 +1,3 @@
-mkdir -p public/dist
-elm make src/Main.elm --output=public/dist/app.js
+out=docs/dist
+mkdir -p $out
+elm make src/Main.elm --output=$out/app.js
