@@ -8,7 +8,7 @@ import Html.Events exposing (..)
 import Parser as P
 
 import RISCParser exposing (parseProgram)
-import Pipeline exposing (viewPipeline)
+import Data.RISC as Risc
 import Pipeline exposing (Pipeline, buildPipeline, viewPipeline)
 
 main : Program (Maybe String) Model Msg
@@ -82,6 +82,7 @@ viewInputArea model =
                     , value model.code
                     , onInput UpdateCode
                     ] []
+                , button [onClick (UpdateCode Risc.exampleCode)] [text "Load example program"]
                 ]
             , div [class "inputarea__right"]
                 [ h3 [] [text "How to use"]
