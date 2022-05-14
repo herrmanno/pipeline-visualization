@@ -27,4 +27,6 @@ jobs:
           elm-version: 0.19.1
 
       - name: Run build.sh
-        run: build.sh
+        run: |
+          chmod +x ./build.sh
+          ./build.sh
