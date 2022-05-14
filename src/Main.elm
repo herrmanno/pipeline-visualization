@@ -130,7 +130,7 @@ viewProgram : Model -> Html Msg
 viewProgram model =
     let
         viewDeadEnd {row, col, problem}
-            = text <| "(" ++ Debug.toString row ++ "," ++ Debug.toString col ++ ") " ++ Debug.toString problem
+            = text <| "(" ++ String.fromInt row ++ "," ++ String.fromInt col ++ ") " ++ Debug.toString problem
     in
     case model.pipeline of
         Err e ->
