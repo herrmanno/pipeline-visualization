@@ -5294,9 +5294,6 @@ var $author$project$Pipeline$Decode = {$: 'Decode'};
 var $author$project$Pipeline$Execute = {$: 'Execute'};
 var $author$project$Pipeline$Fetch = {$: 'Fetch'};
 var $author$project$Pipeline$Memory = {$: 'Memory'};
-var $author$project$Data$Assembly$Register = function (a) {
-	return {$: 'Register', a: a};
-};
 var $author$project$Pipeline$Writeback = {$: 'Writeback'};
 var $elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
@@ -5327,7 +5324,127 @@ var $elm$core$List$filterMap = F2(
 			_List_Nil,
 			xs);
 	});
+var $elm$core$Dict$Black = {$: 'Black'};
+var $elm$core$Dict$RBNode_elm_builtin = F5(
+	function (a, b, c, d, e) {
+		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
+	});
+var $elm$core$Dict$Red = {$: 'Red'};
+var $elm$core$Dict$balance = F5(
+	function (color, key, value, left, right) {
+		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
+			var _v1 = right.a;
+			var rK = right.b;
+			var rV = right.c;
+			var rLeft = right.d;
+			var rRight = right.e;
+			if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
+				var _v3 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var lLeft = left.d;
+				var lRight = left.e;
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					$elm$core$Dict$Red,
+					key,
+					value,
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, lK, lV, lLeft, lRight),
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, rK, rV, rLeft, rRight));
+			} else {
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					color,
+					rK,
+					rV,
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, left, rLeft),
+					rRight);
+			}
+		} else {
+			if ((((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) && (left.d.$ === 'RBNode_elm_builtin')) && (left.d.a.$ === 'Red')) {
+				var _v5 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var _v6 = left.d;
+				var _v7 = _v6.a;
+				var llK = _v6.b;
+				var llV = _v6.c;
+				var llLeft = _v6.d;
+				var llRight = _v6.e;
+				var lRight = left.e;
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					$elm$core$Dict$Red,
+					lK,
+					lV,
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, llK, llV, llLeft, llRight),
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, key, value, lRight, right));
+			} else {
+				return A5($elm$core$Dict$RBNode_elm_builtin, color, key, value, left, right);
+			}
+		}
+	});
 var $elm$core$Basics$compare = _Utils_compare;
+var $elm$core$Dict$insertHelp = F3(
+	function (key, value, dict) {
+		if (dict.$ === 'RBEmpty_elm_builtin') {
+			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
+		} else {
+			var nColor = dict.a;
+			var nKey = dict.b;
+			var nValue = dict.c;
+			var nLeft = dict.d;
+			var nRight = dict.e;
+			var _v1 = A2($elm$core$Basics$compare, key, nKey);
+			switch (_v1.$) {
+				case 'LT':
+					return A5(
+						$elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						A3($elm$core$Dict$insertHelp, key, value, nLeft),
+						nRight);
+				case 'EQ':
+					return A5($elm$core$Dict$RBNode_elm_builtin, nColor, nKey, value, nLeft, nRight);
+				default:
+					return A5(
+						$elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						nLeft,
+						A3($elm$core$Dict$insertHelp, key, value, nRight));
+			}
+		}
+	});
+var $elm$core$Dict$insert = F3(
+	function (key, value, dict) {
+		var _v0 = A3($elm$core$Dict$insertHelp, key, value, dict);
+		if ((_v0.$ === 'RBNode_elm_builtin') && (_v0.a.$ === 'Red')) {
+			var _v1 = _v0.a;
+			var k = _v0.b;
+			var v = _v0.c;
+			var l = _v0.d;
+			var r = _v0.e;
+			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, l, r);
+		} else {
+			var x = _v0;
+			return x;
+		}
+	});
+var $elm$core$Dict$fromList = function (assocs) {
+	return A3(
+		$elm$core$List$foldl,
+		F2(
+			function (_v0, dict) {
+				var key = _v0.a;
+				var value = _v0.b;
+				return A3($elm$core$Dict$insert, key, value, dict);
+			}),
+		$elm$core$Dict$empty,
+		assocs);
+};
 var $elm$core$Dict$get = F2(
 	function (targetKey, dict) {
 		get:
@@ -5366,6 +5483,9 @@ var $author$project$Data$Assembly$Instruction = F2(
 	function (a, b) {
 		return {$: 'Instruction', a: a, b: b};
 	});
+var $author$project$Data$Assembly$Register = function (a) {
+	return {$: 'Register', a: a};
+};
 var $elm$core$Debug$log = _Debug_log;
 var $author$project$Data$RISC$Read = function (a) {
 	return {$: 'Read', a: a};
@@ -6127,114 +6247,14 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 				_List_Nil);
 		}
 	});
-var $elm$core$Dict$Black = {$: 'Black'};
-var $elm$core$Dict$RBNode_elm_builtin = F5(
-	function (a, b, c, d, e) {
-		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
-	});
-var $elm$core$Dict$Red = {$: 'Red'};
-var $elm$core$Dict$balance = F5(
-	function (color, key, value, left, right) {
-		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
-			var _v1 = right.a;
-			var rK = right.b;
-			var rV = right.c;
-			var rLeft = right.d;
-			var rRight = right.e;
-			if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
-				var _v3 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var lLeft = left.d;
-				var lRight = left.e;
-				return A5(
-					$elm$core$Dict$RBNode_elm_builtin,
-					$elm$core$Dict$Red,
-					key,
-					value,
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, lK, lV, lLeft, lRight),
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, rK, rV, rLeft, rRight));
-			} else {
-				return A5(
-					$elm$core$Dict$RBNode_elm_builtin,
-					color,
-					rK,
-					rV,
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, left, rLeft),
-					rRight);
-			}
-		} else {
-			if ((((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) && (left.d.$ === 'RBNode_elm_builtin')) && (left.d.a.$ === 'Red')) {
-				var _v5 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var _v6 = left.d;
-				var _v7 = _v6.a;
-				var llK = _v6.b;
-				var llV = _v6.c;
-				var llLeft = _v6.d;
-				var llRight = _v6.e;
-				var lRight = left.e;
-				return A5(
-					$elm$core$Dict$RBNode_elm_builtin,
-					$elm$core$Dict$Red,
-					lK,
-					lV,
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, llK, llV, llLeft, llRight),
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, key, value, lRight, right));
-			} else {
-				return A5($elm$core$Dict$RBNode_elm_builtin, color, key, value, left, right);
-			}
-		}
-	});
-var $elm$core$Dict$insertHelp = F3(
-	function (key, value, dict) {
-		if (dict.$ === 'RBEmpty_elm_builtin') {
-			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
-		} else {
-			var nColor = dict.a;
-			var nKey = dict.b;
-			var nValue = dict.c;
-			var nLeft = dict.d;
-			var nRight = dict.e;
-			var _v1 = A2($elm$core$Basics$compare, key, nKey);
-			switch (_v1.$) {
-				case 'LT':
-					return A5(
-						$elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						A3($elm$core$Dict$insertHelp, key, value, nLeft),
-						nRight);
-				case 'EQ':
-					return A5($elm$core$Dict$RBNode_elm_builtin, nColor, nKey, value, nLeft, nRight);
-				default:
-					return A5(
-						$elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						nLeft,
-						A3($elm$core$Dict$insertHelp, key, value, nRight));
-			}
-		}
-	});
-var $elm$core$Dict$insert = F3(
-	function (key, value, dict) {
-		var _v0 = A3($elm$core$Dict$insertHelp, key, value, dict);
-		if ((_v0.$ === 'RBNode_elm_builtin') && (_v0.a.$ === 'Red')) {
-			var _v1 = _v0.a;
-			var k = _v0.b;
-			var v = _v0.c;
-			var l = _v0.d;
-			var r = _v0.e;
-			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, l, r);
-		} else {
-			var x = _v0;
-			return x;
-		}
-	});
+var $author$project$Data$RISC$isWrite = function (usage) {
+	if (usage.$ === 'Write') {
+		var i = usage.a;
+		return $elm$core$Maybe$Just(i);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
 var $elm$core$Maybe$map = F2(
 	function (f, maybe) {
 		if (maybe.$ === 'Just') {
@@ -6245,12 +6265,39 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $elm$core$Maybe$map2 = F3(
+	function (func, ma, mb) {
+		if (ma.$ === 'Nothing') {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var a = ma.a;
+			if (mb.$ === 'Nothing') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var b = mb.a;
+				return $elm$core$Maybe$Just(
+					A2(func, a, b));
+			}
+		}
+	});
 var $elm$core$List$maximum = function (list) {
 	if (list.b) {
 		var x = list.a;
 		var xs = list.b;
 		return $elm$core$Maybe$Just(
 			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var $author$project$Data$Assembly$registerName = function (a) {
+	if (a.$ === 'Register') {
+		var s = a.a;
+		return $elm$core$Maybe$Just(s);
 	} else {
 		return $elm$core$Maybe$Nothing;
 	}
@@ -6276,6 +6323,15 @@ var $elm$core$List$repeat = F2(
 	function (n, value) {
 		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
 	});
+var $author$project$Data$RISC$usageCycle = function (u) {
+	if (u.$ === 'Write') {
+		var i = u.a;
+		return i;
+	} else {
+		var i = u.a;
+		return i;
+	}
+};
 var $elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -6285,165 +6341,136 @@ var $elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
-var $author$project$Pipeline$buildPipeline = F2(
-	function (_v0, instrs) {
-		var stepWrap = _v0.stepWrap;
-		var f = F2(
-			function (instr, _v6) {
-				var xs = _v6.a;
-				var _v7 = _v6.b;
-				var offset = _v7.a;
-				var visualOffset = _v7.b;
-				var usages = _v7.c;
-				var paramUsages = A2($author$project$Data$RISC$getParameterUsage, offset, instr);
-				var readUsages = A2(
-					$elm$core$List$filterMap,
-					function (u) {
-						var _v5 = _Utils_Tuple2(u.register, u.usage);
-						if ((_v5.a.$ === 'Register') && (_v5.b.$ === 'Read')) {
-							var r = _v5.a.a;
-							var i = _v5.b.a;
-							return $elm$core$Maybe$Just(
-								_Utils_Tuple2(r, i));
-						} else {
-							return $elm$core$Maybe$Nothing;
-						}
-					},
-					paramUsages);
-				var writeUsages = A2(
-					$elm$core$List$filterMap,
-					function (u) {
-						var _v4 = _Utils_Tuple2(u.register, u.usage);
-						if ((_v4.a.$ === 'Register') && (_v4.b.$ === 'Write')) {
-							var r = _v4.a.a;
-							var i = _v4.b.a;
-							return $elm$core$Maybe$Just(
-								_Utils_Tuple2(r, i));
-						} else {
-							return $elm$core$Maybe$Nothing;
-						}
-					},
-					paramUsages);
-				var numBubbles = A2(
+var $author$project$Pipeline$buildPipeline = function (instrs) {
+	var f = F2(
+		function (instr, _v2) {
+			var xs = _v2.a;
+			var _v3 = _v2.b;
+			var index = _v3.a;
+			var offset = _v3.b;
+			var usages = _v3.c;
+			var paramUsages = A2($author$project$Data$RISC$getParameterUsage, offset, instr);
+			var writeUsages = A2(
+				$elm$core$List$filterMap,
+				function (u) {
+					return A3(
+						$elm$core$Maybe$map2,
+						$elm$core$Tuple$pair,
+						$author$project$Data$Assembly$registerName(u.register),
+						A2(
+							$elm$core$Maybe$map,
+							function (phase) {
+								return {index: index, instr: instr, phase: phase};
+							},
+							$author$project$Data$RISC$isWrite(u.usage)));
+				},
+				paramUsages);
+			var numBubbles = function () {
+				var getWaitMaybe = F2(
+					function (r, i) {
+						return A2(
+							$elm$core$Maybe$andThen,
+							function (t) {
+								return ((t - i) > 0) ? $elm$core$Maybe$Just(t - i) : $elm$core$Maybe$Nothing;
+							},
+							A2(
+								$elm$core$Maybe$map,
+								function (b) {
+									return b.phase;
+								},
+								A2($elm$core$Dict$get, r, usages)));
+					});
+				return A2(
 					$elm$core$Maybe$withDefault,
 					0,
 					$elm$core$List$maximum(
 						A2(
 							$elm$core$List$filterMap,
 							function (u) {
-								var _v3 = _Utils_Tuple2(u.register, u.usage);
-								if (_v3.a.$ === 'Register') {
-									if (_v3.b.$ === 'Read') {
-										var r = _v3.a.a;
-										var i = _v3.b.a;
-										return A2(
-											$elm$core$Maybe$andThen,
-											function (t) {
-												return (t > 0) ? $elm$core$Maybe$Just(t) : $elm$core$Maybe$Nothing;
-											},
-											A2(
-												$elm$core$Maybe$map,
-												function (t) {
-													return t - i;
-												},
-												A2($elm$core$Dict$get, r, usages)));
+								var _v1 = _Utils_Tuple2(u.register, u.usage);
+								if (_v1.a.$ === 'Register') {
+									if (_v1.b.$ === 'Read') {
+										var r = _v1.a.a;
+										var i = _v1.b.a;
+										return A2(getWaitMaybe, r, i);
 									} else {
-										var r = _v3.a.a;
-										var i = _v3.b.a;
-										return A2(
-											$elm$core$Maybe$andThen,
-											function (t) {
-												return (t > 0) ? $elm$core$Maybe$Just(t) : $elm$core$Maybe$Nothing;
-											},
-											A2(
-												$elm$core$Maybe$map,
-												function (t) {
-													return t - i;
-												},
-												A2($elm$core$Dict$get, r, usages)));
+										var r = _v1.a.a;
+										var i = _v1.b.a;
+										return A2(getWaitMaybe, r, i);
 									}
 								} else {
 									return $elm$core$Maybe$Nothing;
 								}
 							},
 							paramUsages)));
-				var newVisualOffset = (_Utils_cmp(visualOffset, stepWrap) > 0) ? 0 : ((visualOffset + 1) + numBubbles);
-				var newUsages = A3(
-					$elm$core$List$foldr,
-					F2(
-						function (_v2, d) {
-							var k = _v2.a;
-							var v = _v2.b;
-							return A3($elm$core$Dict$insert, k, v, d);
-						}),
-					usages,
-					writeUsages);
-				var newOffset = (offset + 1) + numBubbles;
-				var blockedRegisterNames = A2(
-					$elm$core$List$filterMap,
-					function (u) {
-						var _v1 = _Utils_Tuple2(u.register, u.usage);
-						if (_v1.a.$ === 'Register') {
-							if (_v1.b.$ === 'Read') {
-								var r = _v1.a.a;
-								var i = _v1.b.a;
-								return A2(
-									$elm$core$Maybe$andThen,
-									function (t) {
-										return (t > 0) ? $elm$core$Maybe$Just(r) : $elm$core$Maybe$Nothing;
-									},
-									A2(
-										$elm$core$Maybe$map,
-										function (t) {
-											return t - i;
-										},
-										A2($elm$core$Dict$get, r, usages)));
-							} else {
-								var r = _v1.a.a;
-								var i = _v1.b.a;
-								return A2(
-									$elm$core$Maybe$andThen,
-									function (t) {
-										return (t > 0) ? $elm$core$Maybe$Just(r) : $elm$core$Maybe$Nothing;
-									},
-									A2(
-										$elm$core$Maybe$map,
-										function (t) {
-											return t - i;
-										},
-										A2($elm$core$Dict$get, r, usages)));
-							}
-						} else {
-							return $elm$core$Maybe$Nothing;
-						}
-					},
-					paramUsages);
-				var step = {
-					blocked: A2($elm$core$List$map, $author$project$Data$Assembly$Register, blockedRegisterNames),
-					instruction: instr,
-					offset: visualOffset,
-					phases: _Utils_ap(
+			}();
+			var newUsages = A3(
+				$elm$core$List$foldr,
+				F2(
+					function (_v0, d) {
+						var k = _v0.a;
+						var v = _v0.b;
+						return A3($elm$core$Dict$insert, k, v, d);
+					}),
+				usages,
+				writeUsages);
+			var newOffset = (offset + 1) + numBubbles;
+			var blocked = function () {
+				var getBlockingMaybe = F2(
+					function (reg, i) {
+						return A2(
+							$elm$core$Maybe$andThen,
+							function (b) {
+								return ((b.phase - i) > 0) ? $elm$core$Maybe$Just(b) : $elm$core$Maybe$Nothing;
+							},
+							A2(
+								$elm$core$Maybe$andThen,
+								function (r) {
+									return A2($elm$core$Dict$get, r, usages);
+								},
+								reg));
+					});
+				return $elm$core$Dict$fromList(
+					A2(
+						$elm$core$List$filterMap,
+						function (u) {
+							return A3(
+								$elm$core$Maybe$map2,
+								$elm$core$Tuple$pair,
+								$author$project$Data$Assembly$registerName(u.register),
+								A2(
+									getBlockingMaybe,
+									$author$project$Data$Assembly$registerName(u.register),
+									$author$project$Data$RISC$usageCycle(u.usage)));
+						},
+						paramUsages));
+			}();
+			var step = {
+				blocked: blocked,
+				instruction: instr,
+				offset: offset,
+				phases: _Utils_ap(
+					_List_fromArray(
+						[$author$project$Pipeline$Fetch, $author$project$Pipeline$Decode]),
+					_Utils_ap(
+						A2($elm$core$List$repeat, numBubbles, $author$project$Pipeline$Bubble),
 						_List_fromArray(
-							[$author$project$Pipeline$Fetch, $author$project$Pipeline$Decode]),
-						_Utils_ap(
-							A2($elm$core$List$repeat, numBubbles, $author$project$Pipeline$Bubble),
-							_List_fromArray(
-								[$author$project$Pipeline$Execute, $author$project$Pipeline$Memory, $author$project$Pipeline$Writeback])))
-				};
-				return _Utils_Tuple2(
-					A2($elm$core$List$cons, step, xs),
-					_Utils_Tuple3(newOffset, newVisualOffset, newUsages));
-			});
-		var dict = $elm$core$Dict$empty;
-		return $elm$core$List$reverse(
-			A3(
-				$elm$core$List$foldl,
-				f,
-				_Utils_Tuple2(
-					_List_Nil,
-					_Utils_Tuple3(0, 0, dict)),
-				instrs).a);
-	});
+							[$author$project$Pipeline$Execute, $author$project$Pipeline$Memory, $author$project$Pipeline$Writeback])))
+			};
+			return _Utils_Tuple2(
+				A2($elm$core$List$cons, step, xs),
+				_Utils_Tuple3(index + 1, newOffset, newUsages));
+		});
+	var dict = $elm$core$Dict$empty;
+	return $elm$core$List$reverse(
+		A3(
+			$elm$core$List$foldl,
+			f,
+			_Utils_Tuple2(
+				_List_Nil,
+				_Utils_Tuple3(0, 0, dict)),
+			instrs).a);
+};
 var $elm$core$Basics$composeL = F3(
 	function (g, f, x) {
 		return g(
@@ -7289,9 +7316,7 @@ var $author$project$Main$init = function (maybeCode) {
 					code: code,
 					pipeline: A3(
 						$elm$core$Basics$composeL,
-						$elm$core$Result$map(
-							$author$project$Pipeline$buildPipeline(
-								{stepWrap: defaultModel.stepWrap})),
+						$elm$core$Result$map($author$project$Pipeline$buildPipeline),
 						$author$project$RISCParser$parseProgram,
 						code)
 				}),
@@ -7317,8 +7342,7 @@ var $author$project$Main$update = F2(
 				var code = msg.a;
 				var pipeline = A2(
 					$elm$core$Result$map,
-					$author$project$Pipeline$buildPipeline(
-						{stepWrap: model.stepWrap}),
+					$author$project$Pipeline$buildPipeline,
 					$author$project$RISCParser$parseProgram(code));
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -7329,8 +7353,7 @@ var $author$project$Main$update = F2(
 				var stepWrap = msg.a;
 				var pipeline = A2(
 					$elm$core$Result$map,
-					$author$project$Pipeline$buildPipeline(
-						{stepWrap: stepWrap}),
+					$author$project$Pipeline$buildPipeline,
 					$author$project$RISCParser$parseProgram(model.code));
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -7630,112 +7653,176 @@ var $elm$html$Html$Attributes$step = function (n) {
 	return A2($elm$html$Html$Attributes$stringProperty, 'step', n);
 };
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
-var $elm$core$List$intersperse = F2(
-	function (sep, xs) {
-		if (!xs.b) {
-			return _List_Nil;
-		} else {
-			var hd = xs.a;
-			var tl = xs.b;
-			var step = F2(
-				function (x, rest) {
-					return A2(
-						$elm$core$List$cons,
-						sep,
-						A2($elm$core$List$cons, x, rest));
-				});
-			var spersed = A3($elm$core$List$foldr, step, _List_Nil, tl);
-			return A2($elm$core$List$cons, hd, spersed);
-		}
+var $author$project$Data$Assembly$argumentToString = function (a) {
+	switch (a.$) {
+		case 'Register':
+			var name = a.a;
+			return name;
+		case 'Immediate':
+			var value = a.a;
+			return $elm$core$String$fromInt(value);
+		default:
+			var os = a.a;
+			var r = a.b;
+			return $elm$core$String$fromInt(os) + ('(' + ($author$project$Data$Assembly$argumentToString(r) + ')'));
+	}
+};
+var $author$project$Data$Assembly$instructionToString = function (_v0) {
+	var itype = _v0.a;
+	var args = _v0.b;
+	return itype + (' ' + A2(
+		$elm$core$String$join,
+		',',
+		A2($elm$core$List$map, $author$project$Data$Assembly$argumentToString, args)));
+};
+var $author$project$Pipeline$blockingInfoToString = F2(
+	function (regName, _v0) {
+		var index = _v0.index;
+		var instr = _v0.instr;
+		var phase = _v0.phase;
+		return regName + (' blocked by ' + ('(' + ($elm$core$String$fromInt(index) + (') ' + ($author$project$Data$Assembly$instructionToString(instr) + (' until end of cycle ' + $elm$core$String$fromInt(phase)))))));
 	});
-var $elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
-	});
-var $elm$core$List$member = F2(
-	function (x, xs) {
-		return A2(
-			$elm$core$List$any,
-			function (a) {
-				return _Utils_eq(a, x);
-			},
-			xs);
-	});
+var $elm$core$Basics$modBy = _Basics_modBy;
 var $elm$html$Html$table = _VirtualDom_node('table');
 var $elm$html$Html$td = _VirtualDom_node('td');
 var $elm$html$Html$tr = _VirtualDom_node('tr');
-var $author$project$Pipeline$viewPipeline = function (steps) {
-	var viewPhase = function (phase) {
-		switch (phase.$) {
-			case 'Fetch':
+var $author$project$Pipeline$viewPipeline = F2(
+	function (wrap, steps) {
+		var viewPhase = F4(
+			function (offset, blockReason, index, phase) {
+				var content = function (s) {
+					return _List_fromArray(
+						[
+							A2(
+							$elm$html$Html$span,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text(s)
+								])),
+							A2(
+							$elm$html$Html$span,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('phase__index')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									$elm$core$String$fromInt(offset + index))
+								]))
+						]);
+				};
+				switch (phase.$) {
+					case 'Fetch':
+						return A2(
+							$elm$html$Html$td,
+							_List_Nil,
+							content('IF'));
+					case 'Decode':
+						return A2(
+							$elm$html$Html$td,
+							_List_Nil,
+							content('ID'));
+					case 'Execute':
+						return A2(
+							$elm$html$Html$td,
+							_List_Nil,
+							content('X'));
+					case 'Memory':
+						return A2(
+							$elm$html$Html$td,
+							_List_Nil,
+							content('M'));
+					case 'Writeback':
+						return A2(
+							$elm$html$Html$td,
+							_List_Nil,
+							content('WB'));
+					default:
+						return A2(
+							$elm$html$Html$td,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('wait'),
+									$elm$html$Html$Attributes$title(blockReason),
+									A2($elm$html$Html$Attributes$style, 'cursor', 'help')
+								]),
+							content(''));
+				}
+			});
+		var viewInstruction = function (instr) {
+			return A2(
+				$elm$html$Html$td,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('command')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$code,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text(
+								$author$project$Data$Assembly$instructionToString(instr))
+							]))
+					]));
+		};
+		var viewStep = F2(
+			function (index, _v2) {
+				var instruction = _v2.instruction;
+				var phases = _v2.phases;
+				var offset = _v2.offset;
+				var blocked = _v2.blocked;
+				var blockReason = A2(
+					$elm$core$String$join,
+					'\n',
+					A2(
+						$elm$core$List$map,
+						function (_v1) {
+							var r = _v1.a;
+							var b = _v1.b;
+							return A2($author$project$Pipeline$blockingInfoToString, r, b);
+						},
+						$elm$core$Dict$toList(blocked)));
 				return A2(
-					$elm$html$Html$td,
+					$elm$html$Html$tr,
 					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('IF')
-						]));
-			case 'Decode':
-				return A2(
-					$elm$html$Html$td,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('ID')
-						]));
-			case 'Execute':
-				return A2(
-					$elm$html$Html$td,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('X')
-						]));
-			case 'Memory':
-				return A2(
-					$elm$html$Html$td,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('M')
-						]));
-			case 'Writeback':
-				return A2(
-					$elm$html$Html$td,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('WB')
-						]));
-			default:
-				return A2(
-					$elm$html$Html$td,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('wait')
-						]),
-					_List_Nil);
-		}
-	};
-	var viewArgument = F2(
-		function (blocked, arg) {
+					A2(
+						$elm$core$List$cons,
+						A2(
+							$elm$html$Html$td,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('index')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									$elm$core$String$fromInt(index))
+								])),
+						A2(
+							$elm$core$List$cons,
+							viewInstruction(instruction),
+							_Utils_ap(
+								A2(
+									$elm$core$List$repeat,
+									A2($elm$core$Basics$modBy, wrap, offset),
+									A2(
+										$elm$html$Html$td,
+										_List_fromArray(
+											[
+												$elm$html$Html$Attributes$class('offset')
+											]),
+										_List_Nil)),
+								A2(
+									$elm$core$List$indexedMap,
+									A2(viewPhase, offset, blockReason),
+									phases)))));
+			});
+		var viewArgument = function (arg) {
 			switch (arg.$) {
 				case 'Address':
 					var offset = arg.a;
@@ -7748,26 +7835,14 @@ var $author$project$Pipeline$viewPipeline = function (steps) {
 								$elm$html$Html$text(
 								$elm$core$String$fromInt(offset)),
 								$elm$html$Html$text('('),
-								A2(viewArgument, blocked, register),
+								viewArgument(register),
 								$elm$html$Html$text(')')
 							]));
 				case 'Register':
 					var name = arg.a;
 					return A2(
 						$elm$html$Html$span,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$classList(
-								_List_fromArray(
-									[
-										_Utils_Tuple2(
-										'dependency',
-										A2(
-											$elm$core$List$member,
-											$author$project$Data$Assembly$Register(name),
-											blocked))
-									]))
-							]),
+						_List_Nil,
 						_List_fromArray(
 							[
 								$elm$html$Html$text(name)
@@ -7777,74 +7852,12 @@ var $author$project$Pipeline$viewPipeline = function (steps) {
 					return $elm$html$Html$text(
 						$elm$core$String$fromInt(value));
 			}
-		});
-	var viewInstruction = F2(
-		function (blocked, _v2) {
-			var cmd = _v2.a;
-			var args = _v2.b;
-			return A2(
-				$elm$html$Html$td,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('command')
-					]),
-				A2(
-					$elm$core$List$cons,
-					$elm$html$Html$text(cmd),
-					A2(
-						$elm$core$List$cons,
-						$elm$html$Html$text(' '),
-						A2(
-							$elm$core$List$intersperse,
-							$elm$html$Html$text(', '),
-							A2(
-								$elm$core$List$map,
-								viewArgument(blocked),
-								args)))));
-		});
-	var viewStep = F2(
-		function (index, _v1) {
-			var instruction = _v1.instruction;
-			var phases = _v1.phases;
-			var offset = _v1.offset;
-			var blocked = _v1.blocked;
-			return A2(
-				$elm$html$Html$tr,
-				_List_Nil,
-				A2(
-					$elm$core$List$cons,
-					A2(
-						$elm$html$Html$td,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('index')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text(
-								$elm$core$String$fromInt(index))
-							])),
-					A2(
-						$elm$core$List$cons,
-						A2(viewInstruction, blocked, instruction),
-						_Utils_ap(
-							A2(
-								$elm$core$List$repeat,
-								offset,
-								A2(
-									$elm$html$Html$td,
-									_List_fromArray(
-										[
-											$elm$html$Html$Attributes$class('offset')
-										]),
-									_List_Nil)),
-							A2($elm$core$List$map, viewPhase, phases)))));
-		});
-	return A2(
-		$elm$html$Html$table,
-		_List_Nil,
-		A2($elm$core$List$indexedMap, viewStep, steps));
-};
+		};
+		return A2(
+			$elm$html$Html$table,
+			_List_Nil,
+			A2($elm$core$List$indexedMap, viewStep, steps));
+	});
 var $author$project$Main$viewProgram = function (model) {
 	var viewDeadEnd = function (_v1) {
 		var row = _v1.row;
@@ -7871,11 +7884,14 @@ var $author$project$Main$viewProgram = function (model) {
 					A2($elm$html$Html$br, _List_Nil, _List_Nil),
 					A2(
 					$elm$html$Html$label,
-					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('pipeline__step-control')
+						]),
 					_List_fromArray(
 						[
 							$elm$html$Html$text(
-							'Break after ' + ($elm$core$String$fromInt(model.stepWrap) + ' steps')),
+							'Wrap table after ' + ($elm$core$String$fromInt(model.stepWrap) + ' steps')),
 							A2(
 							$elm$html$Html$input,
 							_List_fromArray(
@@ -7897,7 +7913,7 @@ var $author$project$Main$viewProgram = function (model) {
 								]),
 							_List_Nil)
 						])),
-					$author$project$Pipeline$viewPipeline(instrs)
+					A2($author$project$Pipeline$viewPipeline, model.stepWrap, instrs)
 				]));
 	}
 };
