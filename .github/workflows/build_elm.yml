@@ -26,7 +26,5 @@ jobs:
         with:
           elm-version: 0.19.1
 
-      - uses: justgook/setup-elm@1.2.0
-
       - name: Run build.sh
         run: sh build.sh
