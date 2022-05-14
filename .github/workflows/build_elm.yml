@@ -28,10 +28,12 @@ jobs:
         with:
           elm-version: 0.19.1
 
-      - name: Print content
-        run: ls -la
-        shell: bash
-
       - name: Run build.sh
         run: sh build.sh
         shell: bash
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4.3.3
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: docs # The folder the action should deploy.
