@@ -33,5 +33,5 @@ jobs:
         shell: bash
 
       - name: Run build.sh
-        run: build.sh
+        run: sh build.sh
         shell: bash
