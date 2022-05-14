@@ -30,3 +30,5 @@ jobs:
         run: |
           chmod +x ./build.sh
           ./build.sh
+        shell: bash
+        working-directory: .
