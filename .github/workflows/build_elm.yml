@@ -31,9 +31,7 @@ jobs:
       - name: Print content
         run: ls -la
         shell: bash
-        working-directory: $GITHUB_WORKSPACE
 
       - name: Run build.sh
         run: build.sh
         shell: bash
-        working-directory: $GITHUB_WORKSPACE
