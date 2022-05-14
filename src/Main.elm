@@ -7,7 +7,6 @@ import Html.Attributes as A
 import Html.Events exposing (..)
 import Parser as P
 
-import Data.Assembly exposing (Assembly, Instruction(..))
 import RISCParser exposing (parseProgram)
 import Pipeline exposing (viewPipeline)
 import Pipeline exposing (Pipeline, buildPipeline, viewPipeline)
@@ -43,7 +42,7 @@ init maybeCode =
         Just code -> (
             { defaultModel
                 | code = code
-                , pipeline = (Result.map (buildPipeline { stepWrap = defaultModel.stepWrap })) << parseProgram <| code
+                , pipeline = (Result.map buildPipeline) << parseProgram <| code
             }
             , Cmd.none)
         Nothing -> (defaultModel, Cmd.none)
@@ -139,25 +138,25 @@ viewProgram model =
             div []
                 [ hr [] []
                 , br [] []
-                , label []
-                    [ text <| "Break after " ++ String.fromInt model.stepWrap ++ " steps"
+                , label [class "pipeline__step-control"]
+                    [ text <| "Wrap table after " ++ String.fromInt model.stepWrap ++ " steps"
                     , input
                         [type_ "range", A.min "5", A.max "40", step "1"
                         , value (String.fromInt model.stepWrap)
                         , onInput (UpdateStepWrap << Maybe.withDefault model.stepWrap << String.toInt)]
                         []
                     ]
-                , viewPipeline instrs
+                , viewPipeline model.stepWrap instrs
                 ]
 
 update : Msg -> Model -> (Model, Cmd msg)
 update msg model =
     case msg of
         UpdateCode code ->
-            let pipeline = parseProgram code |> Result.map (buildPipeline { stepWrap = model.stepWrap })
+            let pipeline = parseProgram code |> Result.map buildPipeline
             in ({model | code = code, pipeline = pipeline }, setStorage code)
         UpdateStepWrap stepWrap ->
-            let pipeline = parseProgram model.code |> Result.map (buildPipeline { stepWrap = stepWrap })
+            let pipeline = parseProgram model.code |> Result.map buildPipeline
             in ({model | pipeline = pipeline, stepWrap = stepWrap }, Cmd.none)
         ToggleInputArea ->
             ({ model | inputAreaVisible = not model.inputAreaVisible }, Cmd.none)

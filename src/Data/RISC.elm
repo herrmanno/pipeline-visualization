@@ -2,17 +2,37 @@ module Data.RISC exposing (..)
 
 import Data.Assembly exposing (..)
 
-type alias ParameterUsage = List { register : Argument, usage : Usage }
+type alias ParameterUsages = List ParameterUsage
+type alias ParameterUsage = { register : Argument, usage : Usage }
 type Usage = Read AtStartOfCycle | Write AtEndOfCycle
 
+isRead : Usage -> Maybe AtStartOfCycle
+isRead usage = case usage of
+    Read i -> Just i
+    _ -> Nothing
+
+isWrite : Usage -> Maybe AtEndOfCycle
+isWrite usage = case usage of
+    Write i -> Just i
+    _ -> Nothing
+
+read : Argument -> Int -> ParameterUsage
 read r o = { register = r, usage = Read o}
+
+write : Argument -> Int -> ParameterUsage
 write r o = { register = r, usage = Write o}
+
+usageCycle : Usage -> Int
+usageCycle u =
+    case u of
+        Write i -> i
+        Read i -> i
 
 type alias AtStartOfCycle = Int
 type alias AtEndOfCycle = Int
 
 -- | see http://csl.snu.ac.kr/courses/4190.307/2020-1/riscv-user-isa.pdf
-getParameterUsage : Int -> Instruction -> ParameterUsage
+getParameterUsage : Int -> Instruction -> ParameterUsages
 getParameterUsage offset (Instruction itype args) =
     let
         afterExecute = offset + 2
@@ -124,12 +144,3 @@ getParameterUsage offset (Instruction itype args) =
 
 
         _ -> Debug.log ("Unknown instruction: " ++ Debug.toString (Instruction itype args)) []
-
-
-blocksArgumensUntilEndOfCycle : Instruction -> List { arg: Argument, cycle: Int }
-blocksArgumensUntilEndOfCycle (Instruction itype args) =
-    if String.startsWith "l" itype || String.startsWith "s" itype
-    then
-        []
-    else
-        []
