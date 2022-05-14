@@ -22,13 +22,12 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - uses: actions/checkout@v3
       - uses: jorelali/setup-elm@v3
         with:
           elm-version: 0.19.1
 
       - name: Run build.sh
-        run: |
-          chmod +x ./build.sh
-          ./build.sh
+        run: build.sh
         shell: bash
         working-directory: .
