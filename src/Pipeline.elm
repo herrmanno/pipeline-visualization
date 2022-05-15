@@ -1,7 +1,8 @@
 module Pipeline exposing
     (Pipeline, PipelineStep, PipelinePhase(..)
     , buildPipeline, GetParameterUsages, Offset
-    , viewPipeline)
+    , viewPipeline
+    , pipelineToCSV)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -145,3 +146,33 @@ viewPipeline wrap steps =
                 Writeback -> td [] (content "WB")
                 Bubble -> td [class "wait", title blockReason, style "cursor" "help"] (content "")
     in table [] (List.indexedMap viewStep steps)
+
+
+pipelineToCSV : Pipeline -> String
+pipelineToCSV p =
+    let
+        header =
+            let maxIndex =
+                    List.map (\step -> step.offset + List.length step.phases - 1) p
+                    |> List.maximum
+                    |> Maybe.withDefault 0
+                indices = String.join ";" <| List.map String.fromInt <| List.range 0 maxIndex
+            in "Index;Instruction;" ++ indices
+            
+        f : Int -> PipelineStep -> String
+        f i { instruction, phases, offset } =
+            String.join ";" <|
+                String.fromInt i
+                :: instructionToString instruction
+                :: List.repeat offset ""
+                ++ List.map g phases
+        g : PipelinePhase -> String
+        g phase =
+            case phase of
+                Fetch -> "IF"
+                Decode -> "ID"
+                Execute ->"X"
+                Memory -> "M"
+                Writeback ->"WB"
+                Bubble -> ""
+    in String.join "\n" (header :: List.indexedMap f p)

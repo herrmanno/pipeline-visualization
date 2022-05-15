@@ -12,7 +12,7 @@ import Data.RISC.Data as RISC
 import Data.CISC.Data as CISC
 import Data.RISC.Parser as RISCParser
 import Data.CISC.Parser as CISCParser
-import Pipeline exposing (Pipeline, buildPipeline, viewPipeline)
+import Pipeline exposing (Pipeline, buildPipeline, viewPipeline, pipelineToCSV)
 import Data.CISC.Data exposing (getParameterUsage)
 
 type alias Flags = { arch: Maybe String, code : Maybe String }
@@ -39,8 +39,11 @@ type Msg
     | UpdateCode String
     | UpdateStepWrap Int
     | ToggleInputArea
+    | DownloadPipeline
 
 port setStorage : (String, String) -> Cmd msg
+
+port createDownload : String -> Cmd msg
 
 init : Flags -> (Model, Cmd Msg)
 init flags =
@@ -82,6 +85,11 @@ update msg model =
             ({model | stepWrap = stepWrap }, Cmd.none)
         ToggleInputArea ->
             ({ model | inputAreaVisible = not model.inputAreaVisible }, Cmd.none)
+        DownloadPipeline ->
+            let cmd =
+                    Result.map (createDownload << pipelineToCSV) model.pipeline
+                    |> Result.withDefault Cmd.none
+            in (model, cmd)
 
 
 subscriptions : Model -> Sub Msg
@@ -130,7 +138,6 @@ viewInputArea model =
                         , option [value (toString RISC), selected (model.architecture == RISC)]
                             [ text (toString RISC)]
                         ]
-
                     ]
                 , textarea
                     [ placeholder "Insert output from 'objdump' here"
@@ -204,5 +211,6 @@ viewProgram model =
                         , onInput (UpdateStepWrap << Maybe.withDefault model.stepWrap << String.toInt)]
                         []
                     ]
+                , button [onClick DownloadPipeline] [text "Download as CSV"]
                 , viewPipeline model.stepWrap instrs
                 ]
