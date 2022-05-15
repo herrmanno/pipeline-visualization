@@ -1,10 +1,12 @@
-module Pipeline exposing (Pipeline, PipelineStep, PipelinePhase(..), buildPipeline, viewPipeline)
+module Pipeline exposing
+    (Pipeline, PipelineStep, PipelinePhase(..)
+    , buildPipeline, GetParameterUsages, Offset
+    , viewPipeline)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Dict
-import Data.Assembly exposing (Assembly, Instruction(..), Argument(..), registerName, instructionToString)
-import Data.RISC exposing (..)
+import Data.Assembly exposing (..)
 
 type alias Pipeline = List PipelineStep
 
@@ -12,7 +14,6 @@ type alias PipelineStep =
     { instruction : Instruction
     , phases : List PipelinePhase
     , offset : Int
-    -- , blocked : List Argument
     , blocked : Dict.Dict String BlockingInformation
     }
 
@@ -21,7 +22,7 @@ type alias BlockingInformation = { index: Int, instr: Instruction, phase: Int }
 blockingInfoToString : String -> BlockingInformation -> String
 blockingInfoToString regName { index, instr, phase } =
     regName
-    ++ " blocked by "
+    ++ " is blocked by: "
     ++ "(" ++ String.fromInt index ++ ") "
     ++ instructionToString instr
     ++ " until end of cycle "
@@ -35,8 +36,11 @@ type PipelinePhase
     | Memory
     | Writeback
 
-buildPipeline : Assembly -> Pipeline
-buildPipeline instrs =
+type alias Offset = Int
+type alias GetParameterUsages = Offset -> Instruction -> ParameterUsages
+
+buildPipeline : GetParameterUsages -> Assembly -> Pipeline
+buildPipeline getParameterUsage instrs =
     let
         -- dictionare of 'registername' -> 'written after cycle n' usages
         dict : Dict.Dict String BlockingInformation
@@ -120,12 +124,12 @@ viewPipeline wrap steps =
             td
                 [class "command"]
                 [code [] [text <| instructionToString instr]]
-        viewArgument arg =
-            case arg of
-                Address offset register ->
-                    span [] [text <| String.fromInt offset, text "(", viewArgument register, text ")"]
-                Register name -> span [] [text name]
-                Immediate value -> text <| String.fromInt value
+        viewArgument arg = text << argumentToString <| arg
+            -- case arg of
+            --     Address offset register ->
+            --         span [] [text <| String.fromInt offset, text "(", viewArgument register, text ")"]
+            --     Register name -> span [] [text name]
+                -- Immediate value -> text <| String.fromInt value
         viewPhase offset blockReason index phase =
             let
                 content s =

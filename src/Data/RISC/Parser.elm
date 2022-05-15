@@ -1,5 +1,7 @@
-module RISCParser exposing (parseProgram)
+module Data.RISC.Parser exposing (parseProgram)
+
 import String exposing (lines, replace)
+import Hex as Hex
 import Data.Assembly exposing (Assembly, Instruction(..), Argument(..))
 import Parser as P
 import Parser exposing ((|.), (|=))
@@ -37,10 +39,14 @@ parseInstruction =
 parseArgument : P.Parser Argument
 parseArgument =
     let
-        parseInt = P.oneOf [ P.succeed negate |. P.symbol "-" |= P.int , P.int ]
+        {- | Parses a hex num without '0x' prefix -}
+        parseHex : P.Parser Int
+        parseHex =
+            P.succeed (Result.withDefault 0 << Hex.fromString) |= P.getChompedString (P.chompWhile Char.isHexDigit)
+        parseNum = P.oneOf [ P.succeed negate |. P.symbol "-" |= parseHex, parseHex ]
         parseRegister = P.succeed Register |= P.variable { start = Char.isAlpha, inner = Char.isAlphaNum, reserved = Set.empty }
-        parseImmediate = P.succeed Immediate |= parseInt
-        parseAddress = P.succeed Address |= parseInt |. P.symbol "(" |= parseRegister |. P.symbol ")"
+        parseImmediate = P.succeed Immediate |= parseNum
+        parseAddress = P.succeed Address |= parseNum |. P.symbol "(" |= parseRegister |. P.symbol ")"
     in
         P.oneOf (List.map P.backtrackable [ parseAddress, parseRegister, parseImmediate])
 

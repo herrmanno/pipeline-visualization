@@ -80,271 +80,6 @@ function A9(fun, a, b, c, d, e, f, g, h, i) {
 console.warn('Compiled in DEV mode. Follow the advice at https://elm-lang.org/0.19.1/optimize for better performance and smaller assets.');
 
 
-// EQUALITY
-
-function _Utils_eq(x, y)
-{
-	for (
-		var pair, stack = [], isEqual = _Utils_eqHelp(x, y, 0, stack);
-		isEqual && (pair = stack.pop());
-		isEqual = _Utils_eqHelp(pair.a, pair.b, 0, stack)
-		)
-	{}
-
-	return isEqual;
-}
-
-function _Utils_eqHelp(x, y, depth, stack)
-{
-	if (x === y)
-	{
-		return true;
-	}
-
-	if (typeof x !== 'object' || x === null || y === null)
-	{
-		typeof x === 'function' && _Debug_crash(5);
-		return false;
-	}
-
-	if (depth > 100)
-	{
-		stack.push(_Utils_Tuple2(x,y));
-		return true;
-	}
-
-	/**/
-	if (x.$ === 'Set_elm_builtin')
-	{
-		x = $elm$core$Set$toList(x);
-		y = $elm$core$Set$toList(y);
-	}
-	if (x.$ === 'RBNode_elm_builtin' || x.$ === 'RBEmpty_elm_builtin')
-	{
-		x = $elm$core$Dict$toList(x);
-		y = $elm$core$Dict$toList(y);
-	}
-	//*/
-
-	/**_UNUSED/
-	if (x.$ < 0)
-	{
-		x = $elm$core$Dict$toList(x);
-		y = $elm$core$Dict$toList(y);
-	}
-	//*/
-
-	for (var key in x)
-	{
-		if (!_Utils_eqHelp(x[key], y[key], depth + 1, stack))
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-var _Utils_equal = F2(_Utils_eq);
-var _Utils_notEqual = F2(function(a, b) { return !_Utils_eq(a,b); });
-
-
-
-// COMPARISONS
-
-// Code in Generate/JavaScript.hs, Basics.js, and List.js depends on
-// the particular integer values assigned to LT, EQ, and GT.
-
-function _Utils_cmp(x, y, ord)
-{
-	if (typeof x !== 'object')
-	{
-		return x === y ? /*EQ*/ 0 : x < y ? /*LT*/ -1 : /*GT*/ 1;
-	}
-
-	/**/
-	if (x instanceof String)
-	{
-		var a = x.valueOf();
-		var b = y.valueOf();
-		return a === b ? 0 : a < b ? -1 : 1;
-	}
-	//*/
-
-	/**_UNUSED/
-	if (typeof x.$ === 'undefined')
-	//*/
-	/**/
-	if (x.$[0] === '#')
-	//*/
-	{
-		return (ord = _Utils_cmp(x.a, y.a))
-			? ord
-			: (ord = _Utils_cmp(x.b, y.b))
-				? ord
-				: _Utils_cmp(x.c, y.c);
-	}
-
-	// traverse conses until end of a list or a mismatch
-	for (; x.b && y.b && !(ord = _Utils_cmp(x.a, y.a)); x = x.b, y = y.b) {} // WHILE_CONSES
-	return ord || (x.b ? /*GT*/ 1 : y.b ? /*LT*/ -1 : /*EQ*/ 0);
-}
-
-var _Utils_lt = F2(function(a, b) { return _Utils_cmp(a, b) < 0; });
-var _Utils_le = F2(function(a, b) { return _Utils_cmp(a, b) < 1; });
-var _Utils_gt = F2(function(a, b) { return _Utils_cmp(a, b) > 0; });
-var _Utils_ge = F2(function(a, b) { return _Utils_cmp(a, b) >= 0; });
-
-var _Utils_compare = F2(function(x, y)
-{
-	var n = _Utils_cmp(x, y);
-	return n < 0 ? $elm$core$Basics$LT : n ? $elm$core$Basics$GT : $elm$core$Basics$EQ;
-});
-
-
-// COMMON VALUES
-
-var _Utils_Tuple0_UNUSED = 0;
-var _Utils_Tuple0 = { $: '#0' };
-
-function _Utils_Tuple2_UNUSED(a, b) { return { a: a, b: b }; }
-function _Utils_Tuple2(a, b) { return { $: '#2', a: a, b: b }; }
-
-function _Utils_Tuple3_UNUSED(a, b, c) { return { a: a, b: b, c: c }; }
-function _Utils_Tuple3(a, b, c) { return { $: '#3', a: a, b: b, c: c }; }
-
-function _Utils_chr_UNUSED(c) { return c; }
-function _Utils_chr(c) { return new String(c); }
-
-
-// RECORDS
-
-function _Utils_update(oldRecord, updatedFields)
-{
-	var newRecord = {};
-
-	for (var key in oldRecord)
-	{
-		newRecord[key] = oldRecord[key];
-	}
-
-	for (var key in updatedFields)
-	{
-		newRecord[key] = updatedFields[key];
-	}
-
-	return newRecord;
-}
-
-
-// APPEND
-
-var _Utils_append = F2(_Utils_ap);
-
-function _Utils_ap(xs, ys)
-{
-	// append Strings
-	if (typeof xs === 'string')
-	{
-		return xs + ys;
-	}
-
-	// append Lists
-	if (!xs.b)
-	{
-		return ys;
-	}
-	var root = _List_Cons(xs.a, ys);
-	xs = xs.b
-	for (var curr = root; xs.b; xs = xs.b) // WHILE_CONS
-	{
-		curr = curr.b = _List_Cons(xs.a, ys);
-	}
-	return root;
-}
-
-
-
-var _List_Nil_UNUSED = { $: 0 };
-var _List_Nil = { $: '[]' };
-
-function _List_Cons_UNUSED(hd, tl) { return { $: 1, a: hd, b: tl }; }
-function _List_Cons(hd, tl) { return { $: '::', a: hd, b: tl }; }
-
-
-var _List_cons = F2(_List_Cons);
-
-function _List_fromArray(arr)
-{
-	var out = _List_Nil;
-	for (var i = arr.length; i--; )
-	{
-		out = _List_Cons(arr[i], out);
-	}
-	return out;
-}
-
-function _List_toArray(xs)
-{
-	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
-	{
-		out.push(xs.a);
-	}
-	return out;
-}
-
-var _List_map2 = F3(function(f, xs, ys)
-{
-	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
-	{
-		arr.push(A2(f, xs.a, ys.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map3 = F4(function(f, xs, ys, zs)
-{
-	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A3(f, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map4 = F5(function(f, ws, xs, ys, zs)
-{
-	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
-{
-	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_sortBy = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		return _Utils_cmp(f(a), f(b));
-	}));
-});
-
-var _List_sortWith = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		var ord = A2(f, a, b);
-		return ord === $elm$core$Basics$EQ ? 0 : ord === $elm$core$Basics$LT ? -1 : 1;
-	}));
-});
-
-
-
 var _JsArray_empty = [];
 
 function _JsArray_singleton(value)
@@ -790,6 +525,271 @@ function _Debug_regionToString(region)
 	}
 	return 'on lines ' + region.start.line + ' through ' + region.end.line;
 }
+
+
+
+// EQUALITY
+
+function _Utils_eq(x, y)
+{
+	for (
+		var pair, stack = [], isEqual = _Utils_eqHelp(x, y, 0, stack);
+		isEqual && (pair = stack.pop());
+		isEqual = _Utils_eqHelp(pair.a, pair.b, 0, stack)
+		)
+	{}
+
+	return isEqual;
+}
+
+function _Utils_eqHelp(x, y, depth, stack)
+{
+	if (x === y)
+	{
+		return true;
+	}
+
+	if (typeof x !== 'object' || x === null || y === null)
+	{
+		typeof x === 'function' && _Debug_crash(5);
+		return false;
+	}
+
+	if (depth > 100)
+	{
+		stack.push(_Utils_Tuple2(x,y));
+		return true;
+	}
+
+	/**/
+	if (x.$ === 'Set_elm_builtin')
+	{
+		x = $elm$core$Set$toList(x);
+		y = $elm$core$Set$toList(y);
+	}
+	if (x.$ === 'RBNode_elm_builtin' || x.$ === 'RBEmpty_elm_builtin')
+	{
+		x = $elm$core$Dict$toList(x);
+		y = $elm$core$Dict$toList(y);
+	}
+	//*/
+
+	/**_UNUSED/
+	if (x.$ < 0)
+	{
+		x = $elm$core$Dict$toList(x);
+		y = $elm$core$Dict$toList(y);
+	}
+	//*/
+
+	for (var key in x)
+	{
+		if (!_Utils_eqHelp(x[key], y[key], depth + 1, stack))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+var _Utils_equal = F2(_Utils_eq);
+var _Utils_notEqual = F2(function(a, b) { return !_Utils_eq(a,b); });
+
+
+
+// COMPARISONS
+
+// Code in Generate/JavaScript.hs, Basics.js, and List.js depends on
+// the particular integer values assigned to LT, EQ, and GT.
+
+function _Utils_cmp(x, y, ord)
+{
+	if (typeof x !== 'object')
+	{
+		return x === y ? /*EQ*/ 0 : x < y ? /*LT*/ -1 : /*GT*/ 1;
+	}
+
+	/**/
+	if (x instanceof String)
+	{
+		var a = x.valueOf();
+		var b = y.valueOf();
+		return a === b ? 0 : a < b ? -1 : 1;
+	}
+	//*/
+
+	/**_UNUSED/
+	if (typeof x.$ === 'undefined')
+	//*/
+	/**/
+	if (x.$[0] === '#')
+	//*/
+	{
+		return (ord = _Utils_cmp(x.a, y.a))
+			? ord
+			: (ord = _Utils_cmp(x.b, y.b))
+				? ord
+				: _Utils_cmp(x.c, y.c);
+	}
+
+	// traverse conses until end of a list or a mismatch
+	for (; x.b && y.b && !(ord = _Utils_cmp(x.a, y.a)); x = x.b, y = y.b) {} // WHILE_CONSES
+	return ord || (x.b ? /*GT*/ 1 : y.b ? /*LT*/ -1 : /*EQ*/ 0);
+}
+
+var _Utils_lt = F2(function(a, b) { return _Utils_cmp(a, b) < 0; });
+var _Utils_le = F2(function(a, b) { return _Utils_cmp(a, b) < 1; });
+var _Utils_gt = F2(function(a, b) { return _Utils_cmp(a, b) > 0; });
+var _Utils_ge = F2(function(a, b) { return _Utils_cmp(a, b) >= 0; });
+
+var _Utils_compare = F2(function(x, y)
+{
+	var n = _Utils_cmp(x, y);
+	return n < 0 ? $elm$core$Basics$LT : n ? $elm$core$Basics$GT : $elm$core$Basics$EQ;
+});
+
+
+// COMMON VALUES
+
+var _Utils_Tuple0_UNUSED = 0;
+var _Utils_Tuple0 = { $: '#0' };
+
+function _Utils_Tuple2_UNUSED(a, b) { return { a: a, b: b }; }
+function _Utils_Tuple2(a, b) { return { $: '#2', a: a, b: b }; }
+
+function _Utils_Tuple3_UNUSED(a, b, c) { return { a: a, b: b, c: c }; }
+function _Utils_Tuple3(a, b, c) { return { $: '#3', a: a, b: b, c: c }; }
+
+function _Utils_chr_UNUSED(c) { return c; }
+function _Utils_chr(c) { return new String(c); }
+
+
+// RECORDS
+
+function _Utils_update(oldRecord, updatedFields)
+{
+	var newRecord = {};
+
+	for (var key in oldRecord)
+	{
+		newRecord[key] = oldRecord[key];
+	}
+
+	for (var key in updatedFields)
+	{
+		newRecord[key] = updatedFields[key];
+	}
+
+	return newRecord;
+}
+
+
+// APPEND
+
+var _Utils_append = F2(_Utils_ap);
+
+function _Utils_ap(xs, ys)
+{
+	// append Strings
+	if (typeof xs === 'string')
+	{
+		return xs + ys;
+	}
+
+	// append Lists
+	if (!xs.b)
+	{
+		return ys;
+	}
+	var root = _List_Cons(xs.a, ys);
+	xs = xs.b
+	for (var curr = root; xs.b; xs = xs.b) // WHILE_CONS
+	{
+		curr = curr.b = _List_Cons(xs.a, ys);
+	}
+	return root;
+}
+
+
+
+var _List_Nil_UNUSED = { $: 0 };
+var _List_Nil = { $: '[]' };
+
+function _List_Cons_UNUSED(hd, tl) { return { $: 1, a: hd, b: tl }; }
+function _List_Cons(hd, tl) { return { $: '::', a: hd, b: tl }; }
+
+
+var _List_cons = F2(_List_Cons);
+
+function _List_fromArray(arr)
+{
+	var out = _List_Nil;
+	for (var i = arr.length; i--; )
+	{
+		out = _List_Cons(arr[i], out);
+	}
+	return out;
+}
+
+function _List_toArray(xs)
+{
+	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
+	{
+		out.push(xs.a);
+	}
+	return out;
+}
+
+var _List_map2 = F3(function(f, xs, ys)
+{
+	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
+	{
+		arr.push(A2(f, xs.a, ys.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map3 = F4(function(f, xs, ys, zs)
+{
+	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A3(f, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map4 = F5(function(f, ws, xs, ys, zs)
+{
+	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
+{
+	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_sortBy = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		return _Utils_cmp(f(a), f(b));
+	}));
+});
+
+var _List_sortWith = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		var ord = A2(f, a, b);
+		return ord === $elm$core$Basics$EQ ? 0 : ord === $elm$core$Basics$LT ? -1 : 1;
+	}));
+});
 
 
 
@@ -4504,10 +4504,31 @@ var $elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
 };
 var $elm$core$Maybe$Nothing = {$: 'Nothing'};
-var $elm$core$Basics$EQ = {$: 'EQ'};
-var $elm$core$Basics$GT = {$: 'GT'};
-var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$List$cons = _List_cons;
+var $elm$core$Elm$JsArray$foldr = _JsArray_foldr;
+var $elm$core$Array$foldr = F3(
+	function (func, baseCase, _v0) {
+		var tree = _v0.c;
+		var tail = _v0.d;
+		var helper = F2(
+			function (node, acc) {
+				if (node.$ === 'SubTree') {
+					var subTree = node.a;
+					return A3($elm$core$Elm$JsArray$foldr, helper, acc, subTree);
+				} else {
+					var values = node.a;
+					return A3($elm$core$Elm$JsArray$foldr, func, acc, values);
+				}
+			});
+		return A3(
+			$elm$core$Elm$JsArray$foldr,
+			helper,
+			A3($elm$core$Elm$JsArray$foldr, func, baseCase, tail),
+			tree);
+	});
+var $elm$core$Array$toList = function (array) {
+	return A3($elm$core$Array$foldr, $elm$core$List$cons, _List_Nil, array);
+};
 var $elm$core$Dict$foldr = F3(
 	function (func, acc, t) {
 		foldr:
@@ -4560,30 +4581,9 @@ var $elm$core$Set$toList = function (_v0) {
 	var dict = _v0.a;
 	return $elm$core$Dict$keys(dict);
 };
-var $elm$core$Elm$JsArray$foldr = _JsArray_foldr;
-var $elm$core$Array$foldr = F3(
-	function (func, baseCase, _v0) {
-		var tree = _v0.c;
-		var tail = _v0.d;
-		var helper = F2(
-			function (node, acc) {
-				if (node.$ === 'SubTree') {
-					var subTree = node.a;
-					return A3($elm$core$Elm$JsArray$foldr, helper, acc, subTree);
-				} else {
-					var values = node.a;
-					return A3($elm$core$Elm$JsArray$foldr, func, acc, values);
-				}
-			});
-		return A3(
-			$elm$core$Elm$JsArray$foldr,
-			helper,
-			A3($elm$core$Elm$JsArray$foldr, func, baseCase, tail),
-			tree);
-	});
-var $elm$core$Array$toList = function (array) {
-	return A3($elm$core$Array$foldr, $elm$core$List$cons, _List_Nil, array);
-};
+var $elm$core$Basics$EQ = {$: 'EQ'};
+var $elm$core$Basics$GT = {$: 'GT'};
+var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -4975,6 +4975,7 @@ var $elm$core$Result$isOk = function (result) {
 		return false;
 	}
 };
+var $elm$json$Json$Decode$andThen = _Json_andThen;
 var $elm$json$Json$Decode$map = _Json_map1;
 var $elm$json$Json$Decode$map2 = _Json_map2;
 var $elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5289,12 +5290,9 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
-var $author$project$Pipeline$Bubble = {$: 'Bubble'};
-var $author$project$Pipeline$Decode = {$: 'Decode'};
-var $author$project$Pipeline$Execute = {$: 'Execute'};
-var $author$project$Pipeline$Fetch = {$: 'Fetch'};
-var $author$project$Pipeline$Memory = {$: 'Memory'};
-var $author$project$Pipeline$Writeback = {$: 'Writeback'};
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $author$project$Data$Assembly$CISC = {$: 'CISC'};
+var $author$project$Data$Assembly$RISC = {$: 'RISC'};
 var $elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
 		if (maybeValue.$ === 'Just') {
@@ -5304,6 +5302,12 @@ var $elm$core$Maybe$andThen = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $author$project$Pipeline$Bubble = {$: 'Bubble'};
+var $author$project$Pipeline$Decode = {$: 'Decode'};
+var $author$project$Pipeline$Execute = {$: 'Execute'};
+var $author$project$Pipeline$Fetch = {$: 'Fetch'};
+var $author$project$Pipeline$Memory = {$: 'Memory'};
+var $author$project$Pipeline$Writeback = {$: 'Writeback'};
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
 var $elm$core$List$maybeCons = F3(
@@ -5476,6 +5480,390 @@ var $elm$core$Dict$get = F2(
 			}
 		}
 	});
+var $author$project$Data$Assembly$isWrite = function (usage) {
+	if (usage.$ === 'Write') {
+		var i = usage.a;
+		return $elm$core$Maybe$Just(i);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$Maybe$map2 = F3(
+	function (func, ma, mb) {
+		if (ma.$ === 'Nothing') {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var a = ma.a;
+			if (mb.$ === 'Nothing') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var b = mb.a;
+				return $elm$core$Maybe$Just(
+					A2(func, a, b));
+			}
+		}
+	});
+var $elm$core$List$maximum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var $author$project$Data$Assembly$registerName = function (a) {
+	if (a.$ === 'Register') {
+		var s = a.a;
+		return $elm$core$Maybe$Just(s);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$List$repeatHelp = F3(
+	function (result, n, value) {
+		repeatHelp:
+		while (true) {
+			if (n <= 0) {
+				return result;
+			} else {
+				var $temp$result = A2($elm$core$List$cons, value, result),
+					$temp$n = n - 1,
+					$temp$value = value;
+				result = $temp$result;
+				n = $temp$n;
+				value = $temp$value;
+				continue repeatHelp;
+			}
+		}
+	});
+var $elm$core$List$repeat = F2(
+	function (n, value) {
+		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
+	});
+var $author$project$Data$Assembly$usageCycle = function (u) {
+	if (u.$ === 'Write') {
+		var i = u.a;
+		return i;
+	} else {
+		var i = u.a;
+		return i;
+	}
+};
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Pipeline$buildPipeline = F2(
+	function (getParameterUsage, instrs) {
+		var f = F2(
+			function (instr, _v2) {
+				var xs = _v2.a;
+				var _v3 = _v2.b;
+				var index = _v3.a;
+				var offset = _v3.b;
+				var usages = _v3.c;
+				var paramUsages = A2(getParameterUsage, offset, instr);
+				var writeUsages = A2(
+					$elm$core$List$filterMap,
+					function (u) {
+						return A3(
+							$elm$core$Maybe$map2,
+							$elm$core$Tuple$pair,
+							$author$project$Data$Assembly$registerName(u.register),
+							A2(
+								$elm$core$Maybe$map,
+								function (phase) {
+									return {index: index, instr: instr, phase: phase};
+								},
+								$author$project$Data$Assembly$isWrite(u.usage)));
+					},
+					paramUsages);
+				var numBubbles = function () {
+					var getWaitMaybe = F2(
+						function (r, i) {
+							return A2(
+								$elm$core$Maybe$andThen,
+								function (t) {
+									return ((t - i) > 0) ? $elm$core$Maybe$Just(t - i) : $elm$core$Maybe$Nothing;
+								},
+								A2(
+									$elm$core$Maybe$map,
+									function (b) {
+										return b.phase;
+									},
+									A2($elm$core$Dict$get, r, usages)));
+						});
+					return A2(
+						$elm$core$Maybe$withDefault,
+						0,
+						$elm$core$List$maximum(
+							A2(
+								$elm$core$List$filterMap,
+								function (u) {
+									var _v1 = _Utils_Tuple2(u.register, u.usage);
+									if (_v1.a.$ === 'Register') {
+										if (_v1.b.$ === 'Read') {
+											var r = _v1.a.a;
+											var i = _v1.b.a;
+											return A2(getWaitMaybe, r, i);
+										} else {
+											var r = _v1.a.a;
+											var i = _v1.b.a;
+											return A2(getWaitMaybe, r, i);
+										}
+									} else {
+										return $elm$core$Maybe$Nothing;
+									}
+								},
+								paramUsages)));
+				}();
+				var newUsages = A3(
+					$elm$core$List$foldr,
+					F2(
+						function (_v0, d) {
+							var k = _v0.a;
+							var v = _v0.b;
+							return A3($elm$core$Dict$insert, k, v, d);
+						}),
+					usages,
+					writeUsages);
+				var newOffset = (offset + 1) + numBubbles;
+				var blocked = function () {
+					var getBlockingMaybe = F2(
+						function (reg, i) {
+							return A2(
+								$elm$core$Maybe$andThen,
+								function (b) {
+									return ((b.phase - i) > 0) ? $elm$core$Maybe$Just(b) : $elm$core$Maybe$Nothing;
+								},
+								A2(
+									$elm$core$Maybe$andThen,
+									function (r) {
+										return A2($elm$core$Dict$get, r, usages);
+									},
+									reg));
+						});
+					return $elm$core$Dict$fromList(
+						A2(
+							$elm$core$List$filterMap,
+							function (u) {
+								return A3(
+									$elm$core$Maybe$map2,
+									$elm$core$Tuple$pair,
+									$author$project$Data$Assembly$registerName(u.register),
+									A2(
+										getBlockingMaybe,
+										$author$project$Data$Assembly$registerName(u.register),
+										$author$project$Data$Assembly$usageCycle(u.usage)));
+							},
+							paramUsages));
+				}();
+				var step = {
+					blocked: blocked,
+					instruction: instr,
+					offset: offset,
+					phases: _Utils_ap(
+						_List_fromArray(
+							[$author$project$Pipeline$Fetch, $author$project$Pipeline$Decode]),
+						_Utils_ap(
+							A2($elm$core$List$repeat, numBubbles, $author$project$Pipeline$Bubble),
+							_List_fromArray(
+								[$author$project$Pipeline$Execute, $author$project$Pipeline$Memory, $author$project$Pipeline$Writeback])))
+				};
+				return _Utils_Tuple2(
+					A2($elm$core$List$cons, step, xs),
+					_Utils_Tuple3(index + 1, newOffset, newUsages));
+			});
+		var dict = $elm$core$Dict$empty;
+		return $elm$core$List$reverse(
+			A3(
+				$elm$core$List$foldl,
+				f,
+				_Utils_Tuple2(
+					_List_Nil,
+					_Utils_Tuple3(0, 0, dict)),
+				instrs).a);
+	});
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var $author$project$Data$Assembly$fromString = function (s) {
+	switch (s) {
+		case 'RISC':
+			return $elm$core$Maybe$Just($author$project$Data$Assembly$RISC);
+		case 'CISC':
+			return $elm$core$Maybe$Just($author$project$Data$Assembly$CISC);
+		default:
+			return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Data$Assembly$Register = function (a) {
+	return {$: 'Register', a: a};
+};
+var $author$project$Data$Assembly$Read = function (a) {
+	return {$: 'Read', a: a};
+};
+var $author$project$Data$CISC$Data$read = F2(
+	function (r, o) {
+		return {
+			register: r,
+			usage: $author$project$Data$Assembly$Read(o)
+		};
+	});
+var $author$project$Data$Assembly$Write = function (a) {
+	return {$: 'Write', a: a};
+};
+var $author$project$Data$CISC$Data$write = F2(
+	function (r, o) {
+		return {
+			register: r,
+			usage: $author$project$Data$Assembly$Write(o)
+		};
+	});
+var $author$project$Data$CISC$Data$getParameterUsage = F2(
+	function (offset, _v0) {
+		var args = _v0.b;
+		var onDecode = offset + 1;
+		var afterMemory = offset + 3;
+		var afterExecute = offset + 2;
+		_v1$7:
+		while (true) {
+			if (args.b) {
+				if (!args.b.b) {
+					switch (args.a.$) {
+						case 'Register':
+							var r = args.a.a;
+							return _List_fromArray(
+								[
+									A2(
+									$author$project$Data$CISC$Data$read,
+									$author$project$Data$Assembly$Register(r),
+									afterMemory)
+								]);
+						case 'Address':
+							var _v2 = args.a;
+							var r = _v2.b;
+							return _List_fromArray(
+								[
+									A2($author$project$Data$CISC$Data$read, r, afterMemory)
+								]);
+						default:
+							break _v1$7;
+					}
+				} else {
+					if (!args.b.b.b) {
+						switch (args.b.a.$) {
+							case 'Register':
+								switch (args.a.$) {
+									case 'Register':
+										var r1 = args.a.a;
+										var _v3 = args.b;
+										var r2 = _v3.a.a;
+										return _List_fromArray(
+											[
+												A2(
+												$author$project$Data$CISC$Data$write,
+												$author$project$Data$Assembly$Register(r1),
+												afterExecute),
+												A2(
+												$author$project$Data$CISC$Data$read,
+												$author$project$Data$Assembly$Register(r2),
+												onDecode)
+											]);
+									case 'Address':
+										var _v6 = args.a;
+										var r1 = _v6.b;
+										var _v7 = args.b;
+										var r2 = _v7.a.a;
+										return _List_fromArray(
+											[
+												A2(
+												$author$project$Data$CISC$Data$write,
+												$author$project$Data$Assembly$Register(r2),
+												afterMemory),
+												A2($author$project$Data$CISC$Data$read, r1, onDecode)
+											]);
+									default:
+										break _v1$7;
+								}
+							case 'Address':
+								switch (args.a.$) {
+									case 'Register':
+										var r1 = args.a.a;
+										var _v4 = args.b;
+										var _v5 = _v4.a;
+										var r2 = _v5.b;
+										return _List_fromArray(
+											[
+												A2(
+												$author$project$Data$CISC$Data$write,
+												$author$project$Data$Assembly$Register(r1),
+												afterMemory),
+												A2($author$project$Data$CISC$Data$read, r2, onDecode)
+											]);
+									case 'Address':
+										var _v8 = args.a;
+										var r1 = _v8.b;
+										var _v9 = args.b;
+										var _v10 = _v9.a;
+										var r2 = _v10.b;
+										return _List_fromArray(
+											[
+												A2($author$project$Data$CISC$Data$write, r1, afterMemory),
+												A2($author$project$Data$CISC$Data$read, r2, onDecode)
+											]);
+									case 'AddressTriple':
+										var _v11 = args.a;
+										var r1 = _v11.a;
+										var r2 = _v11.b;
+										var _v12 = args.b;
+										var _v13 = _v12.a;
+										var r3 = _v13.b;
+										return _List_fromArray(
+											[
+												A2($author$project$Data$CISC$Data$write, r3, afterExecute),
+												A2($author$project$Data$CISC$Data$read, r1, onDecode),
+												A2($author$project$Data$CISC$Data$read, r2, onDecode)
+											]);
+									default:
+										break _v1$7;
+								}
+							default:
+								break _v1$7;
+						}
+					} else {
+						break _v1$7;
+					}
+				}
+			} else {
+				break _v1$7;
+			}
+		}
+		return _List_Nil;
+	});
 var $author$project$Data$Assembly$Immediate = function (a) {
 	return {$: 'Immediate', a: a};
 };
@@ -5483,32 +5871,23 @@ var $author$project$Data$Assembly$Instruction = F2(
 	function (a, b) {
 		return {$: 'Instruction', a: a, b: b};
 	});
-var $author$project$Data$Assembly$Register = function (a) {
-	return {$: 'Register', a: a};
-};
 var $elm$core$Debug$log = _Debug_log;
-var $author$project$Data$RISC$Read = function (a) {
-	return {$: 'Read', a: a};
-};
-var $author$project$Data$RISC$read = F2(
+var $author$project$Data$RISC$Data$read = F2(
 	function (r, o) {
 		return {
 			register: r,
-			usage: $author$project$Data$RISC$Read(o)
+			usage: $author$project$Data$Assembly$Read(o)
 		};
 	});
 var $elm$core$Debug$toString = _Debug_toString;
-var $author$project$Data$RISC$Write = function (a) {
-	return {$: 'Write', a: a};
-};
-var $author$project$Data$RISC$write = F2(
+var $author$project$Data$RISC$Data$write = F2(
 	function (r, o) {
 		return {
 			register: r,
-			usage: $author$project$Data$RISC$Write(o)
+			usage: $author$project$Data$Assembly$Write(o)
 		};
 	});
-var $author$project$Data$RISC$getParameterUsage = F2(
+var $author$project$Data$RISC$Data$getParameterUsage = F2(
 	function (offset, _v0) {
 		getParameterUsage:
 		while (true) {
@@ -5537,9 +5916,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 								var rd = _v22.a;
 								return _List_fromArray(
 									[
-										A2($author$project$Data$RISC$write, rd, afterExecute),
+										A2($author$project$Data$RISC$Data$write, rd, afterExecute),
 										A2(
-										$author$project$Data$RISC$read,
+										$author$project$Data$RISC$Data$read,
 										$author$project$Data$Assembly$Register('pc'),
 										onDecode)
 									]);
@@ -5565,9 +5944,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v4.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'sub':
 										var _v5 = _v1.b;
@@ -5578,9 +5957,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v7.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'addi':
 										var _v8 = _v1.b;
@@ -5590,8 +5969,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var _v10 = _v9.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									case 'slt':
 										var _v11 = _v1.b;
@@ -5602,9 +5981,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v13.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'slti':
 										var _v14 = _v1.b;
@@ -5614,8 +5993,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var _v16 = _v15.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									case 'sltu':
 										var _v17 = _v1.b;
@@ -5626,9 +6005,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v19.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'and':
 										var _v23 = _v1.b;
@@ -5639,9 +6018,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v25.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'or':
 										var _v26 = _v1.b;
@@ -5652,9 +6031,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v28.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'xor':
 										var _v29 = _v1.b;
@@ -5665,9 +6044,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v31.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'sll':
 										var _v38 = _v1.b;
@@ -5678,9 +6057,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v40.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'srl':
 										var _v41 = _v1.b;
@@ -5691,9 +6070,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v43.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'sra':
 										var _v44 = _v1.b;
@@ -5704,9 +6083,9 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v46.a;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'beq':
 										var _v86 = _v1.b;
@@ -5716,8 +6095,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var _v88 = _v87.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'bne':
 										var _v89 = _v1.b;
@@ -5727,8 +6106,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var _v91 = _v90.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'bge':
 										var _v92 = _v1.b;
@@ -5738,8 +6117,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var _v94 = _v93.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'bgeu':
 										var _v95 = _v1.b;
@@ -5749,8 +6128,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var _v97 = _v96.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'blt':
 										var _v98 = _v1.b;
@@ -5760,8 +6139,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var _v100 = _v99.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'bltu':
 										var _v101 = _v1.b;
@@ -5771,8 +6150,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var _v103 = _v102.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$read, rs2, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode)
 											]);
 									case 'addiw':
 										var _v115 = _v1.b;
@@ -5782,8 +6161,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var _v117 = _v116.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterExecute),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									case 'bgt':
 										var _v118 = _v1.b;
@@ -5863,7 +6242,7 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 									var _v21 = _v20.b;
 									return _List_fromArray(
 										[
-											A2($author$project$Data$RISC$write, rd, afterExecute)
+											A2($author$project$Data$RISC$Data$write, rd, afterExecute)
 										]);
 								case 'andi':
 									var _v32 = _v1.b;
@@ -5872,8 +6251,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 									var rs1 = _v33.a;
 									return _List_fromArray(
 										[
-											A2($author$project$Data$RISC$write, rd, afterExecute),
-											A2($author$project$Data$RISC$read, rs1, onDecode)
+											A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+											A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 										]);
 								case 'ori':
 									var _v34 = _v1.b;
@@ -5882,8 +6261,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 									var rs1 = _v35.a;
 									return _List_fromArray(
 										[
-											A2($author$project$Data$RISC$write, rd, afterExecute),
-											A2($author$project$Data$RISC$read, rs1, onDecode)
+											A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+											A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 										]);
 								case 'xori':
 									var _v36 = _v1.b;
@@ -5892,8 +6271,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 									var rs1 = _v37.a;
 									return _List_fromArray(
 										[
-											A2($author$project$Data$RISC$write, rd, afterExecute),
-											A2($author$project$Data$RISC$read, rs1, onDecode)
+											A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+											A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 										]);
 								case 'slli':
 									var _v47 = _v1.b;
@@ -5902,8 +6281,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 									var rs1 = _v48.a;
 									return _List_fromArray(
 										[
-											A2($author$project$Data$RISC$write, rd, afterExecute),
-											A2($author$project$Data$RISC$read, rs1, onDecode)
+											A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+											A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 										]);
 								case 'srli':
 									var _v49 = _v1.b;
@@ -5912,8 +6291,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 									var rs1 = _v50.a;
 									return _List_fromArray(
 										[
-											A2($author$project$Data$RISC$write, rd, afterExecute),
-											A2($author$project$Data$RISC$read, rs1, onDecode)
+											A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+											A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 										]);
 								case 'srai':
 									var _v51 = _v1.b;
@@ -5922,8 +6301,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 									var rs1 = _v52.a;
 									return _List_fromArray(
 										[
-											A2($author$project$Data$RISC$write, rd, afterExecute),
-											A2($author$project$Data$RISC$read, rs1, onDecode)
+											A2($author$project$Data$RISC$Data$write, rd, afterExecute),
+											A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 										]);
 								case 'ld':
 									if (_v1.b.b.a.$ === 'Address') {
@@ -5934,8 +6313,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs1 = _v55.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterMemory),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterMemory),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -5949,8 +6328,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs1 = _v58.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterMemory),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterMemory),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -5964,8 +6343,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs1 = _v61.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterMemory),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterMemory),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -5979,8 +6358,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs1 = _v64.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterMemory),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterMemory),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -5994,8 +6373,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs1 = _v67.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterMemory),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterMemory),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -6009,8 +6388,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs1 = _v70.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterMemory),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterMemory),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -6024,8 +6403,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs1 = _v73.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$write, rd, afterMemory),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$write, rd, afterMemory),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -6039,8 +6418,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v76.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs2, onDecode),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -6054,8 +6433,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v79.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs2, onDecode),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -6069,8 +6448,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v82.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs2, onDecode),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -6084,8 +6463,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs2 = _v85.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs2, onDecode),
-												A2($author$project$Data$RISC$read, rs1, onDecode)
+												A2($author$project$Data$RISC$Data$read, rs2, onDecode),
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode)
 											]);
 									} else {
 										break _v1$56;
@@ -6096,7 +6475,7 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 									var _v105 = _v104.b;
 									return _List_fromArray(
 										[
-											A2($author$project$Data$RISC$write, rd, afterExecute)
+											A2($author$project$Data$RISC$Data$write, rd, afterExecute)
 										]);
 								case 'jalr':
 									if (_v1.b.b.a.$ === 'Address') {
@@ -6107,8 +6486,8 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 										var rs1 = _v108.b;
 										return _List_fromArray(
 											[
-												A2($author$project$Data$RISC$read, rs1, onDecode),
-												A2($author$project$Data$RISC$write, rd, afterExecute)
+												A2($author$project$Data$RISC$Data$read, rs1, onDecode),
+												A2($author$project$Data$RISC$Data$write, rd, afterExecute)
 											]);
 									} else {
 										break _v1$56;
@@ -6247,235 +6626,6 @@ var $author$project$Data$RISC$getParameterUsage = F2(
 				_List_Nil);
 		}
 	});
-var $author$project$Data$RISC$isWrite = function (usage) {
-	if (usage.$ === 'Write') {
-		var i = usage.a;
-		return $elm$core$Maybe$Just(i);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
-var $elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return $elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
-var $elm$core$Maybe$map2 = F3(
-	function (func, ma, mb) {
-		if (ma.$ === 'Nothing') {
-			return $elm$core$Maybe$Nothing;
-		} else {
-			var a = ma.a;
-			if (mb.$ === 'Nothing') {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var b = mb.a;
-				return $elm$core$Maybe$Just(
-					A2(func, a, b));
-			}
-		}
-	});
-var $elm$core$List$maximum = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(
-			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
-var $elm$core$Tuple$pair = F2(
-	function (a, b) {
-		return _Utils_Tuple2(a, b);
-	});
-var $author$project$Data$Assembly$registerName = function (a) {
-	if (a.$ === 'Register') {
-		var s = a.a;
-		return $elm$core$Maybe$Just(s);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
-var $elm$core$List$repeatHelp = F3(
-	function (result, n, value) {
-		repeatHelp:
-		while (true) {
-			if (n <= 0) {
-				return result;
-			} else {
-				var $temp$result = A2($elm$core$List$cons, value, result),
-					$temp$n = n - 1,
-					$temp$value = value;
-				result = $temp$result;
-				n = $temp$n;
-				value = $temp$value;
-				continue repeatHelp;
-			}
-		}
-	});
-var $elm$core$List$repeat = F2(
-	function (n, value) {
-		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
-	});
-var $author$project$Data$RISC$usageCycle = function (u) {
-	if (u.$ === 'Write') {
-		var i = u.a;
-		return i;
-	} else {
-		var i = u.a;
-		return i;
-	}
-};
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
-var $author$project$Pipeline$buildPipeline = function (instrs) {
-	var f = F2(
-		function (instr, _v2) {
-			var xs = _v2.a;
-			var _v3 = _v2.b;
-			var index = _v3.a;
-			var offset = _v3.b;
-			var usages = _v3.c;
-			var paramUsages = A2($author$project$Data$RISC$getParameterUsage, offset, instr);
-			var writeUsages = A2(
-				$elm$core$List$filterMap,
-				function (u) {
-					return A3(
-						$elm$core$Maybe$map2,
-						$elm$core$Tuple$pair,
-						$author$project$Data$Assembly$registerName(u.register),
-						A2(
-							$elm$core$Maybe$map,
-							function (phase) {
-								return {index: index, instr: instr, phase: phase};
-							},
-							$author$project$Data$RISC$isWrite(u.usage)));
-				},
-				paramUsages);
-			var numBubbles = function () {
-				var getWaitMaybe = F2(
-					function (r, i) {
-						return A2(
-							$elm$core$Maybe$andThen,
-							function (t) {
-								return ((t - i) > 0) ? $elm$core$Maybe$Just(t - i) : $elm$core$Maybe$Nothing;
-							},
-							A2(
-								$elm$core$Maybe$map,
-								function (b) {
-									return b.phase;
-								},
-								A2($elm$core$Dict$get, r, usages)));
-					});
-				return A2(
-					$elm$core$Maybe$withDefault,
-					0,
-					$elm$core$List$maximum(
-						A2(
-							$elm$core$List$filterMap,
-							function (u) {
-								var _v1 = _Utils_Tuple2(u.register, u.usage);
-								if (_v1.a.$ === 'Register') {
-									if (_v1.b.$ === 'Read') {
-										var r = _v1.a.a;
-										var i = _v1.b.a;
-										return A2(getWaitMaybe, r, i);
-									} else {
-										var r = _v1.a.a;
-										var i = _v1.b.a;
-										return A2(getWaitMaybe, r, i);
-									}
-								} else {
-									return $elm$core$Maybe$Nothing;
-								}
-							},
-							paramUsages)));
-			}();
-			var newUsages = A3(
-				$elm$core$List$foldr,
-				F2(
-					function (_v0, d) {
-						var k = _v0.a;
-						var v = _v0.b;
-						return A3($elm$core$Dict$insert, k, v, d);
-					}),
-				usages,
-				writeUsages);
-			var newOffset = (offset + 1) + numBubbles;
-			var blocked = function () {
-				var getBlockingMaybe = F2(
-					function (reg, i) {
-						return A2(
-							$elm$core$Maybe$andThen,
-							function (b) {
-								return ((b.phase - i) > 0) ? $elm$core$Maybe$Just(b) : $elm$core$Maybe$Nothing;
-							},
-							A2(
-								$elm$core$Maybe$andThen,
-								function (r) {
-									return A2($elm$core$Dict$get, r, usages);
-								},
-								reg));
-					});
-				return $elm$core$Dict$fromList(
-					A2(
-						$elm$core$List$filterMap,
-						function (u) {
-							return A3(
-								$elm$core$Maybe$map2,
-								$elm$core$Tuple$pair,
-								$author$project$Data$Assembly$registerName(u.register),
-								A2(
-									getBlockingMaybe,
-									$author$project$Data$Assembly$registerName(u.register),
-									$author$project$Data$RISC$usageCycle(u.usage)));
-						},
-						paramUsages));
-			}();
-			var step = {
-				blocked: blocked,
-				instruction: instr,
-				offset: offset,
-				phases: _Utils_ap(
-					_List_fromArray(
-						[$author$project$Pipeline$Fetch, $author$project$Pipeline$Decode]),
-					_Utils_ap(
-						A2($elm$core$List$repeat, numBubbles, $author$project$Pipeline$Bubble),
-						_List_fromArray(
-							[$author$project$Pipeline$Execute, $author$project$Pipeline$Memory, $author$project$Pipeline$Writeback])))
-			};
-			return _Utils_Tuple2(
-				A2($elm$core$List$cons, step, xs),
-				_Utils_Tuple3(index + 1, newOffset, newUsages));
-		});
-	var dict = $elm$core$Dict$empty;
-	return $elm$core$List$reverse(
-		A3(
-			$elm$core$List$foldl,
-			f,
-			_Utils_Tuple2(
-				_List_Nil,
-				_Utils_Tuple3(0, 0, dict)),
-			instrs).a);
-};
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
-	});
 var $elm$core$Result$map = F2(
 	function (func, ra) {
 		if (ra.$ === 'Ok') {
@@ -6517,6 +6667,62 @@ var $elm$parser$Parser$Advanced$backtrackable = function (_v0) {
 		});
 };
 var $elm$parser$Parser$backtrackable = $elm$parser$Parser$Advanced$backtrackable;
+var $elm$parser$Parser$Advanced$findSubString = _Parser_findSubString;
+var $elm$parser$Parser$Advanced$AddRight = F2(
+	function (a, b) {
+		return {$: 'AddRight', a: a, b: b};
+	});
+var $elm$parser$Parser$Advanced$DeadEnd = F4(
+	function (row, col, problem, contextStack) {
+		return {col: col, contextStack: contextStack, problem: problem, row: row};
+	});
+var $elm$parser$Parser$Advanced$Empty = {$: 'Empty'};
+var $elm$parser$Parser$Advanced$fromInfo = F4(
+	function (row, col, x, context) {
+		return A2(
+			$elm$parser$Parser$Advanced$AddRight,
+			$elm$parser$Parser$Advanced$Empty,
+			A4($elm$parser$Parser$Advanced$DeadEnd, row, col, x, context));
+	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $elm$parser$Parser$Advanced$chompUntil = function (_v0) {
+	var str = _v0.a;
+	var expecting = _v0.b;
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			var _v1 = A5($elm$parser$Parser$Advanced$findSubString, str, s.offset, s.row, s.col, s.src);
+			var newOffset = _v1.a;
+			var newRow = _v1.b;
+			var newCol = _v1.c;
+			return _Utils_eq(newOffset, -1) ? A2(
+				$elm$parser$Parser$Advanced$Bad,
+				false,
+				A4($elm$parser$Parser$Advanced$fromInfo, newRow, newCol, expecting, s.context)) : A3(
+				$elm$parser$Parser$Advanced$Good,
+				_Utils_cmp(s.offset, newOffset) < 0,
+				_Utils_Tuple0,
+				{col: newCol, context: s.context, indent: s.indent, offset: newOffset, row: newRow, src: s.src});
+		});
+};
+var $elm$parser$Parser$Expecting = function (a) {
+	return {$: 'Expecting', a: a};
+};
+var $elm$parser$Parser$Advanced$Token = F2(
+	function (a, b) {
+		return {$: 'Token', a: a, b: b};
+	});
+var $elm$parser$Parser$toToken = function (str) {
+	return A2(
+		$elm$parser$Parser$Advanced$Token,
+		str,
+		$elm$parser$Parser$Expecting(str));
+};
+var $elm$parser$Parser$chompUntil = function (str) {
+	return $elm$parser$Parser$Advanced$chompUntil(
+		$elm$parser$Parser$toToken(str));
+};
 var $elm$parser$Parser$Advanced$chompUntilEndOr = function (str) {
 	return $elm$parser$Parser$Advanced$Parser(
 		function (s) {
@@ -6534,9 +6740,6 @@ var $elm$parser$Parser$Advanced$chompUntilEndOr = function (str) {
 };
 var $elm$parser$Parser$chompUntilEndOr = $elm$parser$Parser$Advanced$chompUntilEndOr;
 var $elm$parser$Parser$Advanced$isSubChar = _Parser_isSubChar;
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var $elm$parser$Parser$Advanced$chompWhileHelp = F5(
 	function (isGood, offset, row, col, s0) {
 		chompWhileHelp:
@@ -6687,7 +6890,6 @@ var $elm$parser$Parser$Advanced$map = F2(
 			});
 	});
 var $elm$parser$Parser$map = $elm$parser$Parser$Advanced$map;
-var $elm$parser$Parser$Advanced$Empty = {$: 'Empty'};
 var $elm$parser$Parser$Advanced$Append = F2(
 	function (a, b) {
 		return {$: 'Append', a: a, b: b};
@@ -6766,11 +6968,241 @@ var $author$project$Data$Assembly$Address = F2(
 	function (a, b) {
 		return {$: 'Address', a: a, b: b};
 	});
+var $author$project$Data$Assembly$AddressTriple = F3(
+	function (a, b, c) {
+		return {$: 'AddressTriple', a: a, b: b, c: c};
+	});
 var $elm$core$Set$Set_elm_builtin = function (a) {
 	return {$: 'Set_elm_builtin', a: a};
 };
 var $elm$core$Set$empty = $elm$core$Set$Set_elm_builtin($elm$core$Dict$empty);
+var $elm$core$String$cons = _String_cons;
+var $elm$core$String$fromChar = function (_char) {
+	return A2($elm$core$String$cons, _char, '');
+};
+var $elm$core$Basics$pow = _Basics_pow;
+var $rtfeldman$elm_hex$Hex$fromStringHelp = F3(
+	function (position, chars, accumulated) {
+		fromStringHelp:
+		while (true) {
+			if (!chars.b) {
+				return $elm$core$Result$Ok(accumulated);
+			} else {
+				var _char = chars.a;
+				var rest = chars.b;
+				switch (_char.valueOf()) {
+					case '0':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated;
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case '1':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + A2($elm$core$Basics$pow, 16, position);
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case '2':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (2 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case '3':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (3 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case '4':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (4 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case '5':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (5 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case '6':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (6 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case '7':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (7 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case '8':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (8 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case '9':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (9 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case 'a':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (10 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case 'b':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (11 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case 'c':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (12 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case 'd':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (13 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case 'e':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (14 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					case 'f':
+						var $temp$position = position - 1,
+							$temp$chars = rest,
+							$temp$accumulated = accumulated + (15 * A2($elm$core$Basics$pow, 16, position));
+						position = $temp$position;
+						chars = $temp$chars;
+						accumulated = $temp$accumulated;
+						continue fromStringHelp;
+					default:
+						var nonHex = _char;
+						return $elm$core$Result$Err(
+							$elm$core$String$fromChar(nonHex) + ' is not a valid hexadecimal character.');
+				}
+			}
+		}
+	});
+var $elm$core$Result$mapError = F2(
+	function (f, result) {
+		if (result.$ === 'Ok') {
+			var v = result.a;
+			return $elm$core$Result$Ok(v);
+		} else {
+			var e = result.a;
+			return $elm$core$Result$Err(
+				f(e));
+		}
+	});
+var $elm$core$List$tail = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(xs);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$String$foldr = _String_foldr;
+var $elm$core$String$toList = function (string) {
+	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
+};
+var $rtfeldman$elm_hex$Hex$fromString = function (str) {
+	if ($elm$core$String$isEmpty(str)) {
+		return $elm$core$Result$Err('Empty strings are not valid hexadecimal strings.');
+	} else {
+		var result = function () {
+			if (A2($elm$core$String$startsWith, '-', str)) {
+				var list = A2(
+					$elm$core$Maybe$withDefault,
+					_List_Nil,
+					$elm$core$List$tail(
+						$elm$core$String$toList(str)));
+				return A2(
+					$elm$core$Result$map,
+					$elm$core$Basics$negate,
+					A3(
+						$rtfeldman$elm_hex$Hex$fromStringHelp,
+						$elm$core$List$length(list) - 1,
+						list,
+						0));
+			} else {
+				return A3(
+					$rtfeldman$elm_hex$Hex$fromStringHelp,
+					$elm$core$String$length(str) - 1,
+					$elm$core$String$toList(str),
+					0);
+			}
+		}();
+		var formatError = function (err) {
+			return A2(
+				$elm$core$String$join,
+				' ',
+				_List_fromArray(
+					['\"' + (str + '\"'), 'is not a valid hexadecimal string because', err]));
+		};
+		return A2($elm$core$Result$mapError, formatError, result);
+	}
+};
+var $elm$parser$Parser$ExpectingBinary = {$: 'ExpectingBinary'};
+var $elm$parser$Parser$ExpectingFloat = {$: 'ExpectingFloat'};
+var $elm$parser$Parser$ExpectingHex = {$: 'ExpectingHex'};
 var $elm$parser$Parser$ExpectingInt = {$: 'ExpectingInt'};
+var $elm$parser$Parser$ExpectingNumber = {$: 'ExpectingNumber'};
+var $elm$parser$Parser$ExpectingOctal = {$: 'ExpectingOctal'};
+var $elm$core$Result$fromMaybe = F2(
+	function (err, maybe) {
+		if (maybe.$ === 'Just') {
+			var v = maybe.a;
+			return $elm$core$Result$Ok(v);
+		} else {
+			return $elm$core$Result$Err(err);
+		}
+	});
 var $elm$parser$Parser$Advanced$consumeBase = _Parser_consumeBase;
 var $elm$parser$Parser$Advanced$consumeBase16 = _Parser_consumeBase16;
 var $elm$parser$Parser$Advanced$bumpOffset = F2(
@@ -6796,14 +7228,6 @@ var $elm$parser$Parser$Advanced$consumeDotAndExp = F2(
 			$elm$parser$Parser$Advanced$consumeExp,
 			A2($elm$parser$Parser$Advanced$chompBase10, offset + 1, src),
 			src) : A2($elm$parser$Parser$Advanced$consumeExp, offset, src);
-	});
-var $elm$parser$Parser$Advanced$AddRight = F2(
-	function (a, b) {
-		return {$: 'AddRight', a: a, b: b};
-	});
-var $elm$parser$Parser$Advanced$DeadEnd = F4(
-	function (row, col, problem, contextStack) {
-		return {col: col, contextStack: contextStack, problem: problem, row: row};
 	});
 var $elm$parser$Parser$Advanced$fromState = F2(
 	function (s, x) {
@@ -6833,13 +7257,6 @@ var $elm$parser$Parser$Advanced$finalizeInt = F5(
 				toValue(n),
 				A2($elm$parser$Parser$Advanced$bumpOffset, endOffset, s));
 		}
-	});
-var $elm$parser$Parser$Advanced$fromInfo = F4(
-	function (row, col, x, context) {
-		return A2(
-			$elm$parser$Parser$Advanced$AddRight,
-			$elm$parser$Parser$Advanced$Empty,
-			A4($elm$parser$Parser$Advanced$DeadEnd, row, col, x, context));
 	});
 var $elm$core$String$toFloat = _String_toFloat;
 var $elm$parser$Parser$Advanced$finalizeFloat = F6(
@@ -6933,20 +7350,18 @@ var $elm$parser$Parser$Advanced$number = function (c) {
 			}
 		});
 };
-var $elm$parser$Parser$Advanced$int = F2(
-	function (expecting, invalid) {
-		return $elm$parser$Parser$Advanced$number(
-			{
-				binary: $elm$core$Result$Err(invalid),
-				expecting: expecting,
-				_float: $elm$core$Result$Err(invalid),
-				hex: $elm$core$Result$Err(invalid),
-				_int: $elm$core$Result$Ok($elm$core$Basics$identity),
-				invalid: invalid,
-				octal: $elm$core$Result$Err(invalid)
-			});
-	});
-var $elm$parser$Parser$int = A2($elm$parser$Parser$Advanced$int, $elm$parser$Parser$ExpectingInt, $elm$parser$Parser$ExpectingInt);
+var $elm$parser$Parser$number = function (i) {
+	return $elm$parser$Parser$Advanced$number(
+		{
+			binary: A2($elm$core$Result$fromMaybe, $elm$parser$Parser$ExpectingBinary, i.binary),
+			expecting: $elm$parser$Parser$ExpectingNumber,
+			_float: A2($elm$core$Result$fromMaybe, $elm$parser$Parser$ExpectingFloat, i._float),
+			hex: A2($elm$core$Result$fromMaybe, $elm$parser$Parser$ExpectingHex, i.hex),
+			_int: A2($elm$core$Result$fromMaybe, $elm$parser$Parser$ExpectingInt, i._int),
+			invalid: $elm$parser$Parser$ExpectingNumber,
+			octal: A2($elm$core$Result$fromMaybe, $elm$parser$Parser$ExpectingOctal, i.octal)
+		});
+};
 var $elm$parser$Parser$Advanced$succeed = function (a) {
 	return $elm$parser$Parser$Advanced$Parser(
 		function (s) {
@@ -6957,10 +7372,6 @@ var $elm$parser$Parser$succeed = $elm$parser$Parser$Advanced$succeed;
 var $elm$parser$Parser$ExpectingSymbol = function (a) {
 	return {$: 'ExpectingSymbol', a: a};
 };
-var $elm$parser$Parser$Advanced$Token = F2(
-	function (a, b) {
-		return {$: 'Token', a: a, b: b};
-	});
 var $elm$parser$Parser$Advanced$isSubString = _Parser_isSubString;
 var $elm$core$Basics$not = _Basics_not;
 var $elm$parser$Parser$Advanced$token = function (_v0) {
@@ -7073,28 +7484,100 @@ var $elm$parser$Parser$variable = function (i) {
 	return $elm$parser$Parser$Advanced$variable(
 		{expecting: $elm$parser$Parser$ExpectingVariable, inner: i.inner, reserved: i.reserved, start: i.start});
 };
-var $author$project$RISCParser$parseArgument = function () {
+var $elm$core$Result$withDefault = F2(
+	function (def, result) {
+		if (result.$ === 'Ok') {
+			var a = result.a;
+			return a;
+		} else {
+			return def;
+		}
+	});
+var $author$project$Data$CISC$Parser$parseArgument = function () {
 	var parseRegister = A2(
 		$elm$parser$Parser$keeper,
 		$elm$parser$Parser$succeed($author$project$Data$Assembly$Register),
 		$elm$parser$Parser$variable(
-			{inner: $elm$core$Char$isAlphaNum, reserved: $elm$core$Set$empty, start: $elm$core$Char$isAlpha}));
-	var parseInt = $elm$parser$Parser$oneOf(
-		_List_fromArray(
-			[
-				A2(
-				$elm$parser$Parser$keeper,
-				A2(
-					$elm$parser$Parser$ignorer,
-					$elm$parser$Parser$succeed($elm$core$Basics$negate),
-					$elm$parser$Parser$symbol('-')),
-				$elm$parser$Parser$int),
-				$elm$parser$Parser$int
-			]));
+			{
+				inner: $elm$core$Char$isAlphaNum,
+				reserved: $elm$core$Set$empty,
+				start: $elm$core$Basics$eq(
+					_Utils_chr('%'))
+			}));
+	var parseHex = A2(
+		$elm$parser$Parser$keeper,
+		$elm$parser$Parser$succeed(
+			A2(
+				$elm$core$Basics$composeL,
+				$elm$core$Result$withDefault(0),
+				$rtfeldman$elm_hex$Hex$fromString)),
+		$elm$parser$Parser$getChompedString(
+			$elm$parser$Parser$chompWhile($elm$core$Char$isHexDigit)));
+	var parseNum = function () {
+		var oxHex = $elm$parser$Parser$number(
+			{
+				binary: $elm$core$Maybe$Nothing,
+				_float: $elm$core$Maybe$Nothing,
+				hex: $elm$core$Maybe$Just($elm$core$Basics$identity),
+				_int: $elm$core$Maybe$Nothing,
+				octal: $elm$core$Maybe$Nothing
+			});
+		var num = $elm$parser$Parser$oneOf(
+			_List_fromArray(
+				[
+					$elm$parser$Parser$backtrackable(oxHex),
+					parseHex
+				]));
+		return $elm$parser$Parser$oneOf(
+			_List_fromArray(
+				[
+					A2(
+					$elm$parser$Parser$keeper,
+					A2(
+						$elm$parser$Parser$ignorer,
+						$elm$parser$Parser$succeed($elm$core$Basics$negate),
+						$elm$parser$Parser$symbol('-')),
+					num),
+					num
+				]));
+	}();
 	var parseImmediate = A2(
 		$elm$parser$Parser$keeper,
 		$elm$parser$Parser$succeed($author$project$Data$Assembly$Immediate),
-		parseInt);
+		$elm$parser$Parser$oneOf(
+			_List_fromArray(
+				[
+					A2(
+					$elm$parser$Parser$keeper,
+					A2(
+						$elm$parser$Parser$ignorer,
+						$elm$parser$Parser$succeed($elm$core$Basics$identity),
+						$elm$parser$Parser$symbol('$')),
+					parseNum),
+					parseNum
+				])));
+	var parseTriple = A2(
+		$elm$parser$Parser$keeper,
+		A2(
+			$elm$parser$Parser$keeper,
+			A2(
+				$elm$parser$Parser$keeper,
+				A2(
+					$elm$parser$Parser$ignorer,
+					$elm$parser$Parser$succeed($author$project$Data$Assembly$AddressTriple),
+					$elm$parser$Parser$symbol('(')),
+				A2(
+					$elm$parser$Parser$ignorer,
+					parseRegister,
+					$elm$parser$Parser$symbol(','))),
+			A2(
+				$elm$parser$Parser$ignorer,
+				parseRegister,
+				$elm$parser$Parser$symbol(','))),
+		A2(
+			$elm$parser$Parser$ignorer,
+			parseImmediate,
+			$elm$parser$Parser$symbol(')')));
 	var parseAddress = A2(
 		$elm$parser$Parser$keeper,
 		A2(
@@ -7102,7 +7585,7 @@ var $author$project$RISCParser$parseArgument = function () {
 			$elm$parser$Parser$succeed($author$project$Data$Assembly$Address),
 			A2(
 				$elm$parser$Parser$ignorer,
-				parseInt,
+				parseNum,
 				$elm$parser$Parser$symbol('('))),
 		A2(
 			$elm$parser$Parser$ignorer,
@@ -7113,9 +7596,9 @@ var $author$project$RISCParser$parseArgument = function () {
 			$elm$core$List$map,
 			$elm$parser$Parser$backtrackable,
 			_List_fromArray(
-				[parseAddress, parseRegister, parseImmediate])));
+				[parseTriple, parseAddress, parseRegister, parseImmediate])));
 }();
-function $author$project$RISCParser$cyclic$parseArguments() {
+function $author$project$Data$CISC$Parser$cyclic$parseArguments() {
 	var parseMore = function (a) {
 		return A2(
 			$elm$parser$Parser$map,
@@ -7129,24 +7612,24 @@ function $author$project$RISCParser$cyclic$parseArguments() {
 							$elm$parser$Parser$ignorer,
 							$elm$parser$Parser$succeed($elm$core$Basics$identity),
 							$elm$parser$Parser$symbol(',')),
-						$author$project$RISCParser$cyclic$parseArguments()),
+						$author$project$Data$CISC$Parser$cyclic$parseArguments()),
 						$elm$parser$Parser$succeed(_List_Nil)
 					])));
 	};
 	return $elm$parser$Parser$oneOf(
 		_List_fromArray(
 			[
-				A2($elm$parser$Parser$andThen, parseMore, $author$project$RISCParser$parseArgument),
+				A2($elm$parser$Parser$andThen, parseMore, $author$project$Data$CISC$Parser$parseArgument),
 				$elm$parser$Parser$succeed(_List_Nil)
 			]));
 }
 try {
-	var $author$project$RISCParser$parseArguments = $author$project$RISCParser$cyclic$parseArguments();
-	$author$project$RISCParser$cyclic$parseArguments = function () {
-		return $author$project$RISCParser$parseArguments;
+	var $author$project$Data$CISC$Parser$parseArguments = $author$project$Data$CISC$Parser$cyclic$parseArguments();
+	$author$project$Data$CISC$Parser$cyclic$parseArguments = function () {
+		return $author$project$Data$CISC$Parser$parseArguments;
 	};
 } catch ($) {
-	throw 'Some top-level definitions from `RISCParser` are causing infinite recursion:\n\n  ┌─────┐\n  │    parseArguments\n  └─────┘\n\nThese errors are very tricky, so read https://elm-lang.org/0.19.1/bad-recursion to learn how to fix it!';}
+	throw 'Some top-level definitions from `Data.CISC.Parser` are causing infinite recursion:\n\n  ┌─────┐\n  │    parseArguments\n  └─────┘\n\nThese errors are very tricky, so read https://elm-lang.org/0.19.1/bad-recursion to learn how to fix it!';}
 var $elm$parser$Parser$Advanced$spaces = $elm$parser$Parser$Advanced$chompWhile(
 	function (c) {
 		return _Utils_eq(
@@ -7158,19 +7641,19 @@ var $elm$parser$Parser$Advanced$spaces = $elm$parser$Parser$Advanced$chompWhile(
 			_Utils_chr('\r')));
 	});
 var $elm$parser$Parser$spaces = $elm$parser$Parser$Advanced$spaces;
-var $author$project$RISCParser$parseInstruction = $elm$parser$Parser$oneOf(
-	_List_fromArray(
-		[
-			$elm$parser$Parser$backtrackable(
-			A2(
-				$elm$parser$Parser$map,
-				$elm$core$Maybe$Just,
+var $author$project$Data$CISC$Parser$parseInstruction = function () {
+	var a = 0;
+	return $elm$parser$Parser$oneOf(
+		_List_fromArray(
+			[
+				$elm$parser$Parser$backtrackable(
 				A2(
-					$elm$parser$Parser$keeper,
+					$elm$parser$Parser$map,
+					$elm$core$Maybe$Just,
 					A2(
 						$elm$parser$Parser$keeper,
 						A2(
-							$elm$parser$Parser$ignorer,
+							$elm$parser$Parser$keeper,
 							A2(
 								$elm$parser$Parser$ignorer,
 								A2(
@@ -7185,20 +7668,20 @@ var $author$project$RISCParser$parseInstruction = $elm$parser$Parser$oneOf(
 												$elm$parser$Parser$spaces),
 											$elm$parser$Parser$chompWhile($elm$core$Char$isHexDigit)),
 										$elm$parser$Parser$symbol(':')),
-									$elm$parser$Parser$spaces),
-								$elm$parser$Parser$chompWhile($elm$core$Char$isHexDigit)),
-							$elm$parser$Parser$spaces),
+									$elm$parser$Parser$chompUntil('  ')),
+								$elm$parser$Parser$spaces),
+							A2(
+								$elm$parser$Parser$ignorer,
+								$elm$parser$Parser$getChompedString(
+									$elm$parser$Parser$chompWhile($elm$core$Char$isAlphaNum)),
+								$elm$parser$Parser$spaces)),
 						A2(
 							$elm$parser$Parser$ignorer,
-							$elm$parser$Parser$getChompedString(
-								$elm$parser$Parser$chompWhile($elm$core$Char$isAlphaNum)),
-							$elm$parser$Parser$spaces)),
-					A2(
-						$elm$parser$Parser$ignorer,
-						$author$project$RISCParser$parseArguments,
-						$elm$parser$Parser$chompUntilEndOr('\n'))))),
-			$elm$parser$Parser$succeed($elm$core$Maybe$Nothing)
-		]));
+							$author$project$Data$CISC$Parser$parseArguments,
+							$elm$parser$Parser$chompUntilEndOr('\n'))))),
+				$elm$parser$Parser$succeed($elm$core$Maybe$Nothing)
+			]));
+}();
 var $elm$core$String$replace = F3(
 	function (before, after, string) {
 		return A2(
@@ -7265,7 +7748,7 @@ var $elm$parser$Parser$run = F2(
 				A2($elm$core$List$map, $elm$parser$Parser$problemToDeadEnd, problems));
 		}
 	});
-var $author$project$RISCParser$parseProgram = function (s) {
+var $author$project$Data$CISC$Parser$parseProgram = function (s) {
 	var xs = $elm$core$String$lines(s);
 	var f = F2(
 		function (a, b) {
@@ -7296,69 +7779,280 @@ var $author$project$RISCParser$parseProgram = function (s) {
 				$elm$core$List$map,
 				A2(
 					$elm$core$Basics$composeL,
-					$elm$parser$Parser$run($author$project$RISCParser$parseInstruction),
+					$elm$parser$Parser$run($author$project$Data$CISC$Parser$parseInstruction),
 					A2($elm$core$String$replace, '\t', ' ')),
 				xs)));
 };
-var $author$project$Main$init = function (maybeCode) {
+var $elm$parser$Parser$Advanced$int = F2(
+	function (expecting, invalid) {
+		return $elm$parser$Parser$Advanced$number(
+			{
+				binary: $elm$core$Result$Err(invalid),
+				expecting: expecting,
+				_float: $elm$core$Result$Err(invalid),
+				hex: $elm$core$Result$Err(invalid),
+				_int: $elm$core$Result$Ok($elm$core$Basics$identity),
+				invalid: invalid,
+				octal: $elm$core$Result$Err(invalid)
+			});
+	});
+var $elm$parser$Parser$int = A2($elm$parser$Parser$Advanced$int, $elm$parser$Parser$ExpectingInt, $elm$parser$Parser$ExpectingInt);
+var $author$project$Data$RISC$Parser$parseArgument = function () {
+	var parseRegister = A2(
+		$elm$parser$Parser$keeper,
+		$elm$parser$Parser$succeed($author$project$Data$Assembly$Register),
+		$elm$parser$Parser$variable(
+			{inner: $elm$core$Char$isAlphaNum, reserved: $elm$core$Set$empty, start: $elm$core$Char$isAlpha}));
+	var parseInt = $elm$parser$Parser$oneOf(
+		_List_fromArray(
+			[
+				A2(
+				$elm$parser$Parser$keeper,
+				A2(
+					$elm$parser$Parser$ignorer,
+					$elm$parser$Parser$succeed($elm$core$Basics$negate),
+					$elm$parser$Parser$symbol('-')),
+				$elm$parser$Parser$int),
+				$elm$parser$Parser$int
+			]));
+	var parseImmediate = A2(
+		$elm$parser$Parser$keeper,
+		$elm$parser$Parser$succeed($author$project$Data$Assembly$Immediate),
+		parseInt);
+	var parseAddress = A2(
+		$elm$parser$Parser$keeper,
+		A2(
+			$elm$parser$Parser$keeper,
+			$elm$parser$Parser$succeed($author$project$Data$Assembly$Address),
+			A2(
+				$elm$parser$Parser$ignorer,
+				parseInt,
+				$elm$parser$Parser$symbol('('))),
+		A2(
+			$elm$parser$Parser$ignorer,
+			parseRegister,
+			$elm$parser$Parser$symbol(')')));
+	return $elm$parser$Parser$oneOf(
+		A2(
+			$elm$core$List$map,
+			$elm$parser$Parser$backtrackable,
+			_List_fromArray(
+				[parseAddress, parseRegister, parseImmediate])));
+}();
+function $author$project$Data$RISC$Parser$cyclic$parseArguments() {
+	var parseMore = function (a) {
+		return A2(
+			$elm$parser$Parser$map,
+			$elm$core$List$cons(a),
+			$elm$parser$Parser$oneOf(
+				_List_fromArray(
+					[
+						A2(
+						$elm$parser$Parser$keeper,
+						A2(
+							$elm$parser$Parser$ignorer,
+							$elm$parser$Parser$succeed($elm$core$Basics$identity),
+							$elm$parser$Parser$symbol(',')),
+						$author$project$Data$RISC$Parser$cyclic$parseArguments()),
+						$elm$parser$Parser$succeed(_List_Nil)
+					])));
+	};
+	return $elm$parser$Parser$oneOf(
+		_List_fromArray(
+			[
+				A2($elm$parser$Parser$andThen, parseMore, $author$project$Data$RISC$Parser$parseArgument),
+				$elm$parser$Parser$succeed(_List_Nil)
+			]));
+}
+try {
+	var $author$project$Data$RISC$Parser$parseArguments = $author$project$Data$RISC$Parser$cyclic$parseArguments();
+	$author$project$Data$RISC$Parser$cyclic$parseArguments = function () {
+		return $author$project$Data$RISC$Parser$parseArguments;
+	};
+} catch ($) {
+	throw 'Some top-level definitions from `Data.RISC.Parser` are causing infinite recursion:\n\n  ┌─────┐\n  │    parseArguments\n  └─────┘\n\nThese errors are very tricky, so read https://elm-lang.org/0.19.1/bad-recursion to learn how to fix it!';}
+var $author$project$Data$RISC$Parser$parseInstruction = $elm$parser$Parser$oneOf(
+	_List_fromArray(
+		[
+			$elm$parser$Parser$backtrackable(
+			A2(
+				$elm$parser$Parser$map,
+				$elm$core$Maybe$Just,
+				A2(
+					$elm$parser$Parser$keeper,
+					A2(
+						$elm$parser$Parser$keeper,
+						A2(
+							$elm$parser$Parser$ignorer,
+							A2(
+								$elm$parser$Parser$ignorer,
+								A2(
+									$elm$parser$Parser$ignorer,
+									A2(
+										$elm$parser$Parser$ignorer,
+										A2(
+											$elm$parser$Parser$ignorer,
+											A2(
+												$elm$parser$Parser$ignorer,
+												$elm$parser$Parser$succeed($author$project$Data$Assembly$Instruction),
+												$elm$parser$Parser$spaces),
+											$elm$parser$Parser$chompWhile($elm$core$Char$isHexDigit)),
+										$elm$parser$Parser$symbol(':')),
+									$elm$parser$Parser$spaces),
+								$elm$parser$Parser$chompWhile($elm$core$Char$isHexDigit)),
+							$elm$parser$Parser$spaces),
+						A2(
+							$elm$parser$Parser$ignorer,
+							$elm$parser$Parser$getChompedString(
+								$elm$parser$Parser$chompWhile($elm$core$Char$isAlphaNum)),
+							$elm$parser$Parser$spaces)),
+					A2(
+						$elm$parser$Parser$ignorer,
+						$author$project$Data$RISC$Parser$parseArguments,
+						$elm$parser$Parser$chompUntilEndOr('\n'))))),
+			$elm$parser$Parser$succeed($elm$core$Maybe$Nothing)
+		]));
+var $author$project$Data$RISC$Parser$parseProgram = function (s) {
+	var xs = $elm$core$String$lines(s);
+	var f = F2(
+		function (a, b) {
+			var _v0 = _Utils_Tuple2(a, b);
+			if (_v0.b.$ === 'Err') {
+				var e = _v0.b.a;
+				return $elm$core$Result$Err(e);
+			} else {
+				if (_v0.a.$ === 'Err') {
+					var e = _v0.a.a;
+					return $elm$core$Result$Err(e);
+				} else {
+					var x = _v0.a.a;
+					var acc = _v0.b.a;
+					return $elm$core$Result$Ok(
+						A2($elm$core$List$cons, x, acc));
+				}
+			}
+		});
+	return A2(
+		$elm$core$Result$map,
+		$elm$core$List$filterMap($elm$core$Basics$identity),
+		A3(
+			$elm$core$List$foldr,
+			f,
+			$elm$core$Result$Ok(_List_Nil),
+			A2(
+				$elm$core$List$map,
+				A2(
+					$elm$core$Basics$composeL,
+					$elm$parser$Parser$run($author$project$Data$RISC$Parser$parseInstruction),
+					A2($elm$core$String$replace, '\t', ' ')),
+				xs)));
+};
+var $author$project$Main$init = function (flags) {
 	var defaultModel = {
+		architecture: $author$project$Data$Assembly$CISC,
 		code: '',
 		inputAreaVisible: true,
 		pipeline: $elm$core$Result$Err(_List_Nil),
 		stepWrap: 20
 	};
-	if (maybeCode.$ === 'Just') {
-		var code = maybeCode.a;
-		return _Utils_Tuple2(
-			_Utils_update(
-				defaultModel,
-				{
-					code: code,
-					pipeline: A3(
-						$elm$core$Basics$composeL,
-						$elm$core$Result$map($author$project$Pipeline$buildPipeline),
-						$author$project$RISCParser$parseProgram,
-						code)
-				}),
-			$elm$core$Platform$Cmd$none);
-	} else {
-		return _Utils_Tuple2(defaultModel, $elm$core$Platform$Cmd$none);
-	}
+	var getParameterUsage = _Utils_eq(defaultModel.architecture, $author$project$Data$Assembly$RISC) ? $author$project$Data$RISC$Data$getParameterUsage : $author$project$Data$CISC$Data$getParameterUsage;
+	var parseProgram = _Utils_eq(defaultModel.architecture, $author$project$Data$Assembly$RISC) ? $author$project$Data$RISC$Parser$parseProgram : $author$project$Data$CISC$Parser$parseProgram;
+	var code = A2($elm$core$Maybe$withDefault, '', flags.code);
+	var arch = A2(
+		$elm$core$Maybe$withDefault,
+		$author$project$Data$Assembly$CISC,
+		A2($elm$core$Maybe$andThen, $author$project$Data$Assembly$fromString, flags.arch));
+	return _Utils_Tuple2(
+		_Utils_update(
+			defaultModel,
+			{
+				architecture: arch,
+				code: code,
+				pipeline: A3(
+					$elm$core$Basics$composeL,
+					$elm$core$Result$map(
+						$author$project$Pipeline$buildPipeline(getParameterUsage)),
+					parseProgram,
+					code)
+			}),
+		$elm$core$Platform$Cmd$none);
 };
 var $elm$json$Json$Decode$null = _Json_decodeNull;
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $author$project$Main$subscriptions = function (model) {
+var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
+var $elm$json$Json$Encode$list = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				$elm$core$List$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(_Utils_Tuple0),
+				entries));
+	});
 var $elm$json$Json$Encode$string = _Json_wrap;
-var $author$project$Main$setStorage = _Platform_outgoingPort('setStorage', $elm$json$Json$Encode$string);
+var $author$project$Main$setStorage = _Platform_outgoingPort(
+	'setStorage',
+	function ($) {
+		var a = $.a;
+		var b = $.b;
+		return A2(
+			$elm$json$Json$Encode$list,
+			$elm$core$Basics$identity,
+			_List_fromArray(
+				[
+					$elm$json$Json$Encode$string(a),
+					$elm$json$Json$Encode$string(b)
+				]));
+	});
+var $author$project$Data$Assembly$toString = function (a) {
+	if (a.$ === 'RISC') {
+		return 'RISC';
+	} else {
+		return 'CISC';
+	}
+};
 var $author$project$Main$update = F2(
 	function (msg, model) {
+		var parseProgram = _Utils_eq(model.architecture, $author$project$Data$Assembly$RISC) ? $author$project$Data$RISC$Parser$parseProgram : $author$project$Data$CISC$Parser$parseProgram;
 		switch (msg.$) {
+			case 'UpdateArchitecture':
+				var arch = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							architecture: arch,
+							code: '',
+							pipeline: $elm$core$Result$Err(_List_Nil)
+						}),
+					$author$project$Main$setStorage(
+						_Utils_Tuple2(
+							'arch',
+							$author$project$Data$Assembly$toString(arch))));
 			case 'UpdateCode':
 				var code = msg.a;
+				var getParameterUsage = _Utils_eq(model.architecture, $author$project$Data$Assembly$RISC) ? $author$project$Data$RISC$Data$getParameterUsage : $author$project$Data$CISC$Data$getParameterUsage;
 				var pipeline = A2(
 					$elm$core$Result$map,
-					$author$project$Pipeline$buildPipeline,
-					$author$project$RISCParser$parseProgram(code));
+					$author$project$Pipeline$buildPipeline(getParameterUsage),
+					parseProgram(code));
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{code: code, pipeline: pipeline}),
-					$author$project$Main$setStorage(code));
+					$author$project$Main$setStorage(
+						_Utils_Tuple2('code', code)));
 			case 'UpdateStepWrap':
 				var stepWrap = msg.a;
-				var pipeline = A2(
-					$elm$core$Result$map,
-					$author$project$Pipeline$buildPipeline,
-					$author$project$RISCParser$parseProgram(model.code));
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{pipeline: pipeline, stepWrap: stepWrap}),
+						{stepWrap: stepWrap}),
 					$elm$core$Platform$Cmd$none);
 			default:
 				return _Utils_Tuple2(
@@ -7398,9 +8092,13 @@ var $author$project$Main$viewHeader = A2(
 				]))
 		]));
 var $author$project$Main$ToggleInputArea = {$: 'ToggleInputArea'};
+var $author$project$Main$UpdateArchitecture = function (a) {
+	return {$: 'UpdateArchitecture', a: a};
+};
 var $author$project$Main$UpdateCode = function (a) {
 	return {$: 'UpdateCode', a: a};
 };
+var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -7432,10 +8130,13 @@ var $elm$html$Html$Attributes$cols = function (n) {
 		'cols',
 		$elm$core$String$fromInt(n));
 };
+var $author$project$Data$CISC$Data$exampleCode = '\nbuild/debug/CMakeFiles/libfib3.dir/fib3.c.o:     file format elf64-x86-64\n\n\nDisassembly of section .text:\n\n0000000000000000 <fib>:\n\n#define LOOP (b = a + b, a = b - a)\n#define LOOP2 (LOOP, LOOP)\n#define LOOP4 (LOOP2, LOOP2)\n\nuint64_t fib(uint32_t n) {\n   0:	55                   	push   %rbp\n   1:	48 89 e5             	mov    %rsp,%rbp\n   4:	41 54                	push   %r12\n   6:	53                   	push   %rbx\n   7:	89 7d ec             	mov    %edi,-0x14(%rbp)\n    register uint64_t t = 0;\n    register uint64_t a = 0;\n   a:	41 bc 00 00 00 00    	mov    $0x0,%r12d\n    register uint64_t b = 1;\n  10:	bb 01 00 00 00       	mov    $0x1,%ebx\n\n    start:\n    if (n <= 1) {\n  15:	83 7d ec 01          	cmpl   $0x1,-0x14(%rbp)\n  19:	77 05                	ja     20 <fib+0x20>\n        return a;\n  1b:	4c 89 e0             	mov    %r12,%rax\n  1e:	eb 4e                	jmp    6e <fib+0x6e>\n    } else if (n > 4) {\n  20:	83 7d ec 04          	cmpl   $0x4,-0x14(%rbp)\n  24:	76 36                	jbe    5c <fib+0x5c>\n        LOOP4;\n  26:	4c 01 e3             	add    %r12,%rbx\n  29:	48 89 d8             	mov    %rbx,%rax\n  2c:	4c 29 e0             	sub    %r12,%rax\n  2f:	49 89 c4             	mov    %rax,%r12\n  32:	4c 01 e3             	add    %r12,%rbx\n  35:	48 89 d8             	mov    %rbx,%rax\n  38:	4c 29 e0             	sub    %r12,%rax\n  3b:	49 89 c4             	mov    %rax,%r12\n  3e:	4c 01 e3             	add    %r12,%rbx\n  41:	48 89 d8             	mov    %rbx,%rax\n  44:	4c 29 e0             	sub    %r12,%rax\n  47:	49 89 c4             	mov    %rax,%r12\n  4a:	4c 01 e3             	add    %r12,%rbx\n  4d:	48 89 d8             	mov    %rbx,%rax\n  50:	4c 29 e0             	sub    %r12,%rax\n  53:	49 89 c4             	mov    %rax,%r12\n        n -= 4;\n  56:	83 6d ec 04          	subl   $0x4,-0x14(%rbp)\n        goto start;\n  5a:	eb b9                	jmp    15 <fib+0x15>\n    } else {\n        LOOP;\n  5c:	4c 01 e3             	add    %r12,%rbx\n  5f:	48 89 d8             	mov    %rbx,%rax\n  62:	4c 29 e0             	sub    %r12,%rax\n  65:	49 89 c4             	mov    %rax,%r12\n        n -= 1;\n  68:	83 6d ec 01          	subl   $0x1,-0x14(%rbp)\n        goto start;\n  6c:	eb a7                	jmp    15 <fib+0x15>\n    }\n}\n  6e:	5b                   	pop    %rbx\n  6f:	41 5c                	pop    %r12\n  71:	5d                   	pop    %rbp\n  72:	c3                   	retq   \n';
+var $author$project$Data$RISC$Data$exampleCode = '\nbuild/debug/fib3.risc.o:     file format elf64-littleriscv\n\n\nDisassembly of section .text:\n\n0000000000000000 <fib>:\n\n#define LOOP (b = a + b, a = b - a)\n#define LOOP2 (LOOP, LOOP)\n#define LOOP4 (LOOP2, LOOP2)\n\nuint64_t fib(uint32_t n) {\n   0:	7179                	addi	sp,sp,-48\n   2:	f422                	sd	s0,40(sp)\n   4:	f026                	sd	s1,32(sp)\n   6:	ec4a                	sd	s2,24(sp)\n   8:	1800                	addi	s0,sp,48\n   a:	87aa                	mv	a5,a0\n   c:	fcf42e23          	sw	a5,-36(s0)\n    register uint64_t t = 0;\n    register uint64_t a = 0;\n  10:	4901                	li	s2,0\n    register uint64_t b = 1;\n  12:	4485                	li	s1,1\n\n0000000000000014 <.L2>:\n\n    start:\n    if (n <= 1) {\n  14:	fdc42783          	lw	a5,-36(s0)\n  18:	0007871b          	sext.w	a4,a5\n  1c:	4785                	li	a5,1\n  1e:	00e7e463          	bltu	a5,a4,26 <.L3>\n        return a;\n  22:	87ca                	mv	a5,s2\n  24:	a099                	j	6a <.L6>\n\n0000000000000026 <.L3>:\n    } else if (n > 4) {\n  26:	fdc42783          	lw	a5,-36(s0)\n  2a:	0007871b          	sext.w	a4,a5\n  2e:	4791                	li	a5,4\n  30:	02e7f463          	bgeu	a5,a4,58 <.L5>\n        LOOP4;\n  34:	94ca                	add	s1,s1,s2\n  36:	41248933          	sub	s2,s1,s2\n  3a:	94ca                	add	s1,s1,s2\n  3c:	41248933          	sub	s2,s1,s2\n  40:	94ca                	add	s1,s1,s2\n  42:	41248933          	sub	s2,s1,s2\n  46:	94ca                	add	s1,s1,s2\n  48:	41248933          	sub	s2,s1,s2\n        n -= 4;\n  4c:	fdc42783          	lw	a5,-36(s0)\n  50:	37f1                	addiw	a5,a5,-4\n  52:	fcf42e23          	sw	a5,-36(s0)\n        goto start;\n  56:	bf7d                	j	14 <.L2>\n\n0000000000000058 <.L5>:\n    } else {\n        LOOP;\n  58:	94ca                	add	s1,s1,s2\n  5a:	41248933          	sub	s2,s1,s2\n        n -= 1;\n  5e:	fdc42783          	lw	a5,-36(s0)\n  62:	37fd                	addiw	a5,a5,-1\n  64:	fcf42e23          	sw	a5,-36(s0)\n        goto start;\n  68:	b775                	j	14 <.L2>\n\n000000000000006a <.L6>:\n    }\n}\n  6a:	853e                	mv	a0,a5\n  6c:	7422                	ld	s0,40(sp)\n  6e:	7482                	ld	s1,32(sp)\n  70:	6962                	ld	s2,24(sp)\n  72:	6145                	addi	sp,sp,48\n  74:	8082                	ret\n';
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $elm$html$Html$h4 = _VirtualDom_node('h4');
 var $elm$html$Html$hr = _VirtualDom_node('hr');
 var $elm$html$Html$img = _VirtualDom_node('img');
+var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -7466,7 +8167,6 @@ var $elm$html$Html$Events$stopPropagationOn = F2(
 			event,
 			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
-var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$at = F2(
 	function (fields, decoder) {
 		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
@@ -7485,6 +8185,7 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			$elm$html$Html$Events$alwaysStop,
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
+var $elm$html$Html$option = _VirtualDom_node('option');
 var $elm$html$Html$p = _VirtualDom_node('p');
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
 var $elm$html$Html$Attributes$rows = function (n) {
@@ -7493,6 +8194,16 @@ var $elm$html$Html$Attributes$rows = function (n) {
 		'rows',
 		$elm$core$String$fromInt(n));
 };
+var $elm$html$Html$select = _VirtualDom_node('select');
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
 var $elm$html$Html$span = _VirtualDom_node('span');
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
@@ -7506,6 +8217,7 @@ var $elm$html$Html$textarea = _VirtualDom_node('textarea');
 var $elm$html$Html$Attributes$title = $elm$html$Html$Attributes$stringProperty('title');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$viewInputArea = function (model) {
+	var exampleCode = _Utils_eq(model.architecture, $author$project$Data$Assembly$RISC) ? $author$project$Data$RISC$Data$exampleCode : $author$project$Data$CISC$Data$exampleCode;
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
@@ -7550,6 +8262,57 @@ var $author$project$Main$viewInputArea = function (model) {
 						_List_fromArray(
 							[
 								A2(
+								$elm$html$Html$label,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Architecture '),
+										A2(
+										$elm$html$Html$select,
+										_List_fromArray(
+											[
+												$elm$html$Html$Events$onInput(
+												A2(
+													$elm$core$Basics$composeL,
+													A2(
+														$elm$core$Basics$composeL,
+														$author$project$Main$UpdateArchitecture,
+														$elm$core$Maybe$withDefault($author$project$Data$Assembly$CISC)),
+													$author$project$Data$Assembly$fromString))
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$option,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$value(
+														$author$project$Data$Assembly$toString($author$project$Data$Assembly$CISC)),
+														$elm$html$Html$Attributes$selected(
+														_Utils_eq(model.architecture, $author$project$Data$Assembly$CISC))
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text(
+														$author$project$Data$Assembly$toString($author$project$Data$Assembly$CISC) + ' (AT&T syntax)')
+													])),
+												A2(
+												$elm$html$Html$option,
+												_List_fromArray(
+													[
+														$elm$html$Html$Attributes$value(
+														$author$project$Data$Assembly$toString($author$project$Data$Assembly$RISC)),
+														$elm$html$Html$Attributes$selected(
+														_Utils_eq(model.architecture, $author$project$Data$Assembly$RISC))
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text(
+														$author$project$Data$Assembly$toString($author$project$Data$Assembly$RISC))
+													]))
+											]))
+									])),
+								A2(
 								$elm$html$Html$textarea,
 								_List_fromArray(
 									[
@@ -7559,7 +8322,18 @@ var $author$project$Main$viewInputArea = function (model) {
 										$elm$html$Html$Attributes$value(model.code),
 										$elm$html$Html$Events$onInput($author$project$Main$UpdateCode)
 									]),
-								_List_Nil)
+								_List_Nil),
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Events$onClick(
+										$author$project$Main$UpdateCode(exampleCode))
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Load example program')
+									]))
 							])),
 						A2(
 						$elm$html$Html$div,
@@ -7646,7 +8420,6 @@ var $author$project$Main$UpdateStepWrap = function (a) {
 var $elm$html$Html$br = _VirtualDom_node('br');
 var $elm$html$Html$code = _VirtualDom_node('code');
 var $elm$html$Html$input = _VirtualDom_node('input');
-var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('max');
 var $elm$html$Html$Attributes$min = $elm$html$Html$Attributes$stringProperty('min');
 var $elm$html$Html$Attributes$step = function (n) {
@@ -7661,10 +8434,15 @@ var $author$project$Data$Assembly$argumentToString = function (a) {
 		case 'Immediate':
 			var value = a.a;
 			return $elm$core$String$fromInt(value);
-		default:
+		case 'Address':
 			var os = a.a;
 			var r = a.b;
 			return $elm$core$String$fromInt(os) + ('(' + ($author$project$Data$Assembly$argumentToString(r) + ')'));
+		default:
+			var x = a.a;
+			var y = a.b;
+			var z = a.c;
+			return '(' + ($author$project$Data$Assembly$argumentToString(x) + (',' + ($author$project$Data$Assembly$argumentToString(y) + (',' + ($author$project$Data$Assembly$argumentToString(z) + ')')))));
 	}
 };
 var $author$project$Data$Assembly$instructionToString = function (_v0) {
@@ -7680,7 +8458,7 @@ var $author$project$Pipeline$blockingInfoToString = F2(
 		var index = _v0.index;
 		var instr = _v0.instr;
 		var phase = _v0.phase;
-		return regName + (' blocked by ' + ('(' + ($elm$core$String$fromInt(index) + (') ' + ($author$project$Data$Assembly$instructionToString(instr) + (' until end of cycle ' + $elm$core$String$fromInt(phase)))))));
+		return regName + (' is blocked by: ' + ('(' + ($elm$core$String$fromInt(index) + (') ' + ($author$project$Data$Assembly$instructionToString(instr) + (' until end of cycle ' + $elm$core$String$fromInt(phase)))))));
 	});
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $elm$html$Html$table = _VirtualDom_node('table');
@@ -7771,19 +8549,19 @@ var $author$project$Pipeline$viewPipeline = F2(
 					]));
 		};
 		var viewStep = F2(
-			function (index, _v2) {
-				var instruction = _v2.instruction;
-				var phases = _v2.phases;
-				var offset = _v2.offset;
-				var blocked = _v2.blocked;
+			function (index, _v1) {
+				var instruction = _v1.instruction;
+				var phases = _v1.phases;
+				var offset = _v1.offset;
+				var blocked = _v1.blocked;
 				var blockReason = A2(
 					$elm$core$String$join,
 					'\n',
 					A2(
 						$elm$core$List$map,
-						function (_v1) {
-							var r = _v1.a;
-							var b = _v1.b;
+						function (_v0) {
+							var r = _v0.a;
+							var b = _v0.b;
 							return A2($author$project$Pipeline$blockingInfoToString, r, b);
 						},
 						$elm$core$Dict$toList(blocked)));
@@ -7823,35 +8601,7 @@ var $author$project$Pipeline$viewPipeline = F2(
 									phases)))));
 			});
 		var viewArgument = function (arg) {
-			switch (arg.$) {
-				case 'Address':
-					var offset = arg.a;
-					var register = arg.b;
-					return A2(
-						$elm$html$Html$span,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$elm$html$Html$text(
-								$elm$core$String$fromInt(offset)),
-								$elm$html$Html$text('('),
-								viewArgument(register),
-								$elm$html$Html$text(')')
-							]));
-				case 'Register':
-					var name = arg.a;
-					return A2(
-						$elm$html$Html$span,
-						_List_Nil,
-						_List_fromArray(
-							[
-								$elm$html$Html$text(name)
-							]));
-				default:
-					var value = arg.a;
-					return $elm$html$Html$text(
-						$elm$core$String$fromInt(value));
-			}
+			return A3($elm$core$Basics$composeL, $elm$html$Html$text, $author$project$Data$Assembly$argumentToString, arg);
 		};
 		return A2(
 			$elm$html$Html$table,
@@ -7931,9 +8681,31 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$element(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$oneOf(
-		_List_fromArray(
-			[
-				$elm$json$Json$Decode$null($elm$core$Maybe$Nothing),
-				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, $elm$json$Json$Decode$string)
-			])))(0)}});}(this));
+	A2(
+		$elm$json$Json$Decode$andThen,
+		function (code) {
+			return A2(
+				$elm$json$Json$Decode$andThen,
+				function (arch) {
+					return $elm$json$Json$Decode$succeed(
+						{arch: arch, code: code});
+				},
+				A2(
+					$elm$json$Json$Decode$field,
+					'arch',
+					$elm$json$Json$Decode$oneOf(
+						_List_fromArray(
+							[
+								$elm$json$Json$Decode$null($elm$core$Maybe$Nothing),
+								A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, $elm$json$Json$Decode$string)
+							]))));
+		},
+		A2(
+			$elm$json$Json$Decode$field,
+			'code',
+			$elm$json$Json$Decode$oneOf(
+				_List_fromArray(
+					[
+						$elm$json$Json$Decode$null($elm$core$Maybe$Nothing),
+						A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, $elm$json$Json$Decode$string)
+					])))))(0)}});}(this));

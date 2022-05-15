@@ -7,11 +7,17 @@ import Html.Attributes as A
 import Html.Events exposing (..)
 import Parser as P
 
-import RISCParser exposing (parseProgram)
-import Data.RISC as Risc
+import Data.Assembly exposing (Architecture(..), toString, fromString)
+import Data.RISC.Data as RISC
+import Data.CISC.Data as CISC
+import Data.RISC.Parser as RISCParser
+import Data.CISC.Parser as CISCParser
 import Pipeline exposing (Pipeline, buildPipeline, viewPipeline)
+import Data.CISC.Data exposing (getParameterUsage)
 
-main : Program (Maybe String) Model Msg
+type alias Flags = { arch: Maybe String, code : Maybe String }
+
+main : Program Flags Model Msg
 main =
     Browser.element
         { init = init
@@ -21,31 +27,66 @@ main =
         }
 
 type alias Model =
-    { code : String
-    , pipeline : Result (List P.DeadEnd) (Pipeline)
+    { architecture : Architecture
+    , code : String
+    , pipeline : Result (List P.DeadEnd) Pipeline
     , stepWrap : Int
     , inputAreaVisible : Bool
     }
 
 type Msg
-    = UpdateCode String
+    = UpdateArchitecture Architecture
+    | UpdateCode String
     | UpdateStepWrap Int
     | ToggleInputArea
 
-port setStorage : String -> Cmd msg
+port setStorage : (String, String) -> Cmd msg
 
-init : Maybe String -> (Model, Cmd Msg)
-init maybeCode =
-    let defaultModel = { code = "", pipeline = Err [], stepWrap = 20, inputAreaVisible = True }
-    in
-    case maybeCode of
-        Just code -> (
-            { defaultModel
-                | code = code
-                , pipeline = (Result.map buildPipeline) << parseProgram <| code
+init : Flags -> (Model, Cmd Msg)
+init flags =
+    let defaultModel =
+            { architecture = CISC
+            , code = ""
+            , pipeline = Err []
+            , stepWrap = 20
+            , inputAreaVisible = True
             }
-            , Cmd.none)
-        Nothing -> (defaultModel, Cmd.none)
+        arch = Maybe.withDefault CISC (Maybe.andThen fromString flags.arch)
+        code = Maybe.withDefault "" flags.code
+        parseProgram =
+            if arch == RISC then RISCParser.parseProgram else CISCParser.parseProgram
+        getParameterUsage =
+            if defaultModel.architecture == RISC then RISC.getParameterUsage else CISC.getParameterUsage
+    in
+        ( { defaultModel
+          | architecture = arch
+          , code = code
+          , pipeline = (Result.map (buildPipeline getParameterUsage)) << parseProgram <| code }
+        , Cmd.none)
+
+update : Msg -> Model -> (Model, Cmd msg)
+update msg model =
+    let parseProgram =
+            if model.architecture == RISC then RISCParser.parseProgram else CISCParser.parseProgram
+    in
+    case msg of
+        UpdateArchitecture arch ->
+            ({ model | architecture = arch, code = "", pipeline = Err [] }, setStorage ("arch", toString arch))
+        UpdateCode code ->
+            let
+                getParameterUsage =
+                    if model.architecture == RISC then RISC.getParameterUsage else CISC.getParameterUsage
+                pipeline = parseProgram code |> Result.map (buildPipeline getParameterUsage)
+            in ({model | code = code, pipeline = pipeline }, setStorage ("code", code))
+        UpdateStepWrap stepWrap ->
+            ({model | stepWrap = stepWrap }, Cmd.none)
+        ToggleInputArea ->
+            ({ model | inputAreaVisible = not model.inputAreaVisible }, Cmd.none)
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none
 
 view : Model -> Html Msg
 view model =
@@ -59,14 +100,19 @@ viewHeader : Html Msg
 viewHeader =
     div []
         [ h1 [class "header__title"] [text "Assembly Pipeline Visualizer"]
-        -- , h3 [] [text "Past your ", code [] [text "objdump"], text " output in textarea to generate pipeline"]
         ]
 
 viewInputArea : Model -> Html Msg
 viewInputArea model =
+    let
+        exampleCode = if model.architecture == RISC then RISC.exampleCode else CISC.exampleCode
+    in
     div []
         [ hr [] []
-        , div [class "inputarea", classList [("inputarea--hidden", not model.inputAreaVisible)]]
+        , div
+            [class "inputarea"
+            , classList [("inputarea--hidden", not model.inputAreaVisible)]
+            ]
             [ div []
                 [ img
                     [ class "inputarea__toggle"
@@ -75,14 +121,25 @@ viewInputArea model =
                     , onClick ToggleInputArea] [] 
                 ]
             , div [class "inputarea__left"]
-                [ textarea
+                [ label []
+                    [ text "Architecture "
+                    , select
+                        [ onInput (UpdateArchitecture << Maybe.withDefault CISC << fromString)]
+                        [ option [value (toString CISC), selected (model.architecture == CISC)]
+                            [ text (toString CISC ++ " (AT&T syntax)")]
+                        , option [value (toString RISC), selected (model.architecture == RISC)]
+                            [ text (toString RISC)]
+                        ]
+
+                    ]
+                , textarea
                     [ placeholder "Insert output from 'objdump' here"
                     , cols 120
                     , rows 30
                     , value model.code
                     , onInput UpdateCode
                     ] []
-                , button [onClick (UpdateCode Risc.exampleCode)] [text "Load example program"]
+                , button [onClick (UpdateCode exampleCode)] [text "Load example program"]
                 ]
             , div [class "inputarea__right"]
                 [ h3 [] [text "How to use"]
@@ -149,20 +206,3 @@ viewProgram model =
                     ]
                 , viewPipeline model.stepWrap instrs
                 ]
-
-update : Msg -> Model -> (Model, Cmd msg)
-update msg model =
-    case msg of
-        UpdateCode code ->
-            let pipeline = parseProgram code |> Result.map buildPipeline
-            in ({model | code = code, pipeline = pipeline }, setStorage code)
-        UpdateStepWrap stepWrap ->
-            let pipeline = parseProgram model.code |> Result.map buildPipeline
-            in ({model | pipeline = pipeline, stepWrap = stepWrap }, Cmd.none)
-        ToggleInputArea ->
-            ({ model | inputAreaVisible = not model.inputAreaVisible }, Cmd.none)
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
