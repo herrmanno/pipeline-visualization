@@ -25,6 +25,19 @@
         var value = args[1]
         localStorage.setItem(key, value)
     })
+
+    app.ports.createDownload.subscribe(text => {
+        var element = document.createElement("a");
+        element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
+        element.setAttribute("download", "pipeline.csv");
+
+        element.style.display = "none";
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
+    })
 </script> 
 </body>
 </html>

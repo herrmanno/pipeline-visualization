@@ -7980,6 +7980,177 @@ var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Main$createDownload = _Platform_outgoingPort('createDownload', $elm$json$Json$Encode$string);
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
+var $elm$core$String$fromList = _String_fromList;
+var $elm$core$Basics$modBy = _Basics_modBy;
+var $rtfeldman$elm_hex$Hex$unsafeToDigit = function (num) {
+	unsafeToDigit:
+	while (true) {
+		switch (num) {
+			case 0:
+				return _Utils_chr('0');
+			case 1:
+				return _Utils_chr('1');
+			case 2:
+				return _Utils_chr('2');
+			case 3:
+				return _Utils_chr('3');
+			case 4:
+				return _Utils_chr('4');
+			case 5:
+				return _Utils_chr('5');
+			case 6:
+				return _Utils_chr('6');
+			case 7:
+				return _Utils_chr('7');
+			case 8:
+				return _Utils_chr('8');
+			case 9:
+				return _Utils_chr('9');
+			case 10:
+				return _Utils_chr('a');
+			case 11:
+				return _Utils_chr('b');
+			case 12:
+				return _Utils_chr('c');
+			case 13:
+				return _Utils_chr('d');
+			case 14:
+				return _Utils_chr('e');
+			case 15:
+				return _Utils_chr('f');
+			default:
+				var $temp$num = num;
+				num = $temp$num;
+				continue unsafeToDigit;
+		}
+	}
+};
+var $rtfeldman$elm_hex$Hex$unsafePositiveToDigits = F2(
+	function (digits, num) {
+		unsafePositiveToDigits:
+		while (true) {
+			if (num < 16) {
+				return A2(
+					$elm$core$List$cons,
+					$rtfeldman$elm_hex$Hex$unsafeToDigit(num),
+					digits);
+			} else {
+				var $temp$digits = A2(
+					$elm$core$List$cons,
+					$rtfeldman$elm_hex$Hex$unsafeToDigit(
+						A2($elm$core$Basics$modBy, 16, num)),
+					digits),
+					$temp$num = (num / 16) | 0;
+				digits = $temp$digits;
+				num = $temp$num;
+				continue unsafePositiveToDigits;
+			}
+		}
+	});
+var $rtfeldman$elm_hex$Hex$toString = function (num) {
+	return $elm$core$String$fromList(
+		(num < 0) ? A2(
+			$elm$core$List$cons,
+			_Utils_chr('-'),
+			A2($rtfeldman$elm_hex$Hex$unsafePositiveToDigits, _List_Nil, -num)) : A2($rtfeldman$elm_hex$Hex$unsafePositiveToDigits, _List_Nil, num));
+};
+var $author$project$Data$Assembly$argumentToString = function (a) {
+	switch (a.$) {
+		case 'Register':
+			var name = a.a;
+			return name;
+		case 'Immediate':
+			var value = a.a;
+			return ((value < 0) ? '-' : '') + ('0x' + $rtfeldman$elm_hex$Hex$toString(
+				$elm$core$Basics$abs(value)));
+		case 'Address':
+			var os = a.a;
+			var r = a.b;
+			return $author$project$Data$Assembly$argumentToString(
+				$author$project$Data$Assembly$Immediate(os)) + ('(' + ($author$project$Data$Assembly$argumentToString(r) + ')'));
+		default:
+			var x = a.a;
+			var y = a.b;
+			var z = a.c;
+			return '(' + ($author$project$Data$Assembly$argumentToString(x) + (',' + ($author$project$Data$Assembly$argumentToString(y) + (',' + ($author$project$Data$Assembly$argumentToString(z) + ')')))));
+	}
+};
+var $author$project$Data$Assembly$instructionToString = function (_v0) {
+	var itype = _v0.a;
+	var args = _v0.b;
+	return itype + (' ' + A2(
+		$elm$core$String$join,
+		',',
+		A2($elm$core$List$map, $author$project$Data$Assembly$argumentToString, args)));
+};
+var $author$project$Pipeline$pipelineToCSV = function (p) {
+	var header = function () {
+		var maxIndex = A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$maximum(
+				A2(
+					$elm$core$List$map,
+					function (step) {
+						return (step.offset + $elm$core$List$length(step.phases)) - 1;
+					},
+					p)));
+		var indices = A2(
+			$elm$core$String$join,
+			';',
+			A2(
+				$elm$core$List$map,
+				$elm$core$String$fromInt,
+				A2($elm$core$List$range, 0, maxIndex)));
+		return 'Index;Instruction;' + indices;
+	}();
+	var g = function (phase) {
+		switch (phase.$) {
+			case 'Fetch':
+				return 'IF';
+			case 'Decode':
+				return 'ID';
+			case 'Execute':
+				return 'X';
+			case 'Memory':
+				return 'M';
+			case 'Writeback':
+				return 'WB';
+			default:
+				return '';
+		}
+	};
+	var f = F2(
+		function (i, _v0) {
+			var instruction = _v0.instruction;
+			var phases = _v0.phases;
+			var offset = _v0.offset;
+			return A2(
+				$elm$core$String$join,
+				';',
+				A2(
+					$elm$core$List$cons,
+					$elm$core$String$fromInt(i),
+					A2(
+						$elm$core$List$cons,
+						$author$project$Data$Assembly$instructionToString(instruction),
+						_Utils_ap(
+							A2($elm$core$List$repeat, offset, ''),
+							A2($elm$core$List$map, g, phases)))));
+		});
+	return A2(
+		$elm$core$String$join,
+		'\n',
+		A2(
+			$elm$core$List$cons,
+			header,
+			A2($elm$core$List$indexedMap, f, p)));
+};
 var $elm$json$Json$Encode$list = F2(
 	function (func, entries) {
 		return _Json_wrap(
@@ -7989,7 +8160,6 @@ var $elm$json$Json$Encode$list = F2(
 				_Json_emptyArray(_Utils_Tuple0),
 				entries));
 	});
-var $elm$json$Json$Encode$string = _Json_wrap;
 var $author$project$Main$setStorage = _Platform_outgoingPort(
 	'setStorage',
 	function ($) {
@@ -8049,12 +8219,21 @@ var $author$project$Main$update = F2(
 						model,
 						{stepWrap: stepWrap}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'ToggleInputArea':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{inputAreaVisible: !model.inputAreaVisible}),
 					$elm$core$Platform$Cmd$none);
+			default:
+				var cmd = A2(
+					$elm$core$Result$withDefault,
+					$elm$core$Platform$Cmd$none,
+					A2(
+						$elm$core$Result$map,
+						A2($elm$core$Basics$composeL, $author$project$Main$createDownload, $author$project$Pipeline$pipelineToCSV),
+						model.pipeline));
+				return _Utils_Tuple2(model, cmd);
 		}
 	});
 var $elm$html$Html$main_ = _VirtualDom_node('main');
@@ -8409,6 +8588,7 @@ var $author$project$Main$viewInputArea = function (model) {
 					]))
 			]));
 };
+var $author$project$Main$DownloadPipeline = {$: 'DownloadPipeline'};
 var $author$project$Main$UpdateStepWrap = function (a) {
 	return {$: 'UpdateStepWrap', a: a};
 };
@@ -8421,112 +8601,6 @@ var $elm$html$Html$Attributes$step = function (n) {
 	return A2($elm$html$Html$Attributes$stringProperty, 'step', n);
 };
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
-var $elm$core$Basics$abs = function (n) {
-	return (n < 0) ? (-n) : n;
-};
-var $elm$core$String$fromList = _String_fromList;
-var $elm$core$Basics$modBy = _Basics_modBy;
-var $rtfeldman$elm_hex$Hex$unsafeToDigit = function (num) {
-	unsafeToDigit:
-	while (true) {
-		switch (num) {
-			case 0:
-				return _Utils_chr('0');
-			case 1:
-				return _Utils_chr('1');
-			case 2:
-				return _Utils_chr('2');
-			case 3:
-				return _Utils_chr('3');
-			case 4:
-				return _Utils_chr('4');
-			case 5:
-				return _Utils_chr('5');
-			case 6:
-				return _Utils_chr('6');
-			case 7:
-				return _Utils_chr('7');
-			case 8:
-				return _Utils_chr('8');
-			case 9:
-				return _Utils_chr('9');
-			case 10:
-				return _Utils_chr('a');
-			case 11:
-				return _Utils_chr('b');
-			case 12:
-				return _Utils_chr('c');
-			case 13:
-				return _Utils_chr('d');
-			case 14:
-				return _Utils_chr('e');
-			case 15:
-				return _Utils_chr('f');
-			default:
-				var $temp$num = num;
-				num = $temp$num;
-				continue unsafeToDigit;
-		}
-	}
-};
-var $rtfeldman$elm_hex$Hex$unsafePositiveToDigits = F2(
-	function (digits, num) {
-		unsafePositiveToDigits:
-		while (true) {
-			if (num < 16) {
-				return A2(
-					$elm$core$List$cons,
-					$rtfeldman$elm_hex$Hex$unsafeToDigit(num),
-					digits);
-			} else {
-				var $temp$digits = A2(
-					$elm$core$List$cons,
-					$rtfeldman$elm_hex$Hex$unsafeToDigit(
-						A2($elm$core$Basics$modBy, 16, num)),
-					digits),
-					$temp$num = (num / 16) | 0;
-				digits = $temp$digits;
-				num = $temp$num;
-				continue unsafePositiveToDigits;
-			}
-		}
-	});
-var $rtfeldman$elm_hex$Hex$toString = function (num) {
-	return $elm$core$String$fromList(
-		(num < 0) ? A2(
-			$elm$core$List$cons,
-			_Utils_chr('-'),
-			A2($rtfeldman$elm_hex$Hex$unsafePositiveToDigits, _List_Nil, -num)) : A2($rtfeldman$elm_hex$Hex$unsafePositiveToDigits, _List_Nil, num));
-};
-var $author$project$Data$Assembly$argumentToString = function (a) {
-	switch (a.$) {
-		case 'Register':
-			var name = a.a;
-			return name;
-		case 'Immediate':
-			var value = a.a;
-			return ((value < 0) ? '-' : '') + ('0x' + $rtfeldman$elm_hex$Hex$toString(
-				$elm$core$Basics$abs(value)));
-		case 'Address':
-			var os = a.a;
-			var r = a.b;
-			return $author$project$Data$Assembly$argumentToString(
-				$author$project$Data$Assembly$Immediate(os)) + ('(' + ($author$project$Data$Assembly$argumentToString(r) + ')'));
-		default:
-			var x = a.a;
-			var y = a.b;
-			var z = a.c;
-			return '(' + ($author$project$Data$Assembly$argumentToString(x) + (',' + ($author$project$Data$Assembly$argumentToString(y) + (',' + ($author$project$Data$Assembly$argumentToString(z) + ')')))));
-	}
-};
-var $author$project$Data$Assembly$instructionToString = function (_v0) {
-	var itype = _v0.a;
-	var args = _v0.b;
-	return itype + (' ' + A2(
-		$elm$core$String$join,
-		',',
-		A2($elm$core$List$map, $author$project$Data$Assembly$argumentToString, args)));
-};
 var $author$project$Pipeline$blockingInfoToString = F2(
 	function (regName, _v0) {
 		var index = _v0.index;
@@ -8735,6 +8809,16 @@ var $author$project$Main$viewProgram = function (model) {
 										$elm$core$String$toInt))
 								]),
 							_List_Nil)
+						])),
+					A2(
+					$elm$html$Html$button,
+					_List_fromArray(
+						[
+							$elm$html$Html$Events$onClick($author$project$Main$DownloadPipeline)
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('Download as CSV')
 						])),
 					A2($author$project$Pipeline$viewPipeline, model.stepWrap, instrs)
 				]));
