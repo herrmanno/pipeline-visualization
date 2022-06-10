@@ -7641,19 +7641,19 @@ var $elm$parser$Parser$Advanced$spaces = $elm$parser$Parser$Advanced$chompWhile(
 			_Utils_chr('\r')));
 	});
 var $elm$parser$Parser$spaces = $elm$parser$Parser$Advanced$spaces;
-var $author$project$Data$CISC$Parser$parseInstruction = function () {
-	var a = 0;
-	return $elm$parser$Parser$oneOf(
-		_List_fromArray(
-			[
-				$elm$parser$Parser$backtrackable(
+var $author$project$Data$CISC$Parser$parseInstruction = $elm$parser$Parser$oneOf(
+	_List_fromArray(
+		[
+			$elm$parser$Parser$backtrackable(
+			A2(
+				$elm$parser$Parser$map,
+				$elm$core$Maybe$Just,
 				A2(
-					$elm$parser$Parser$map,
-					$elm$core$Maybe$Just,
+					$elm$parser$Parser$keeper,
 					A2(
 						$elm$parser$Parser$keeper,
 						A2(
-							$elm$parser$Parser$keeper,
+							$elm$parser$Parser$ignorer,
 							A2(
 								$elm$parser$Parser$ignorer,
 								A2(
@@ -7668,20 +7668,20 @@ var $author$project$Data$CISC$Parser$parseInstruction = function () {
 												$elm$parser$Parser$spaces),
 											$elm$parser$Parser$chompWhile($elm$core$Char$isHexDigit)),
 										$elm$parser$Parser$symbol(':')),
-									$elm$parser$Parser$chompUntil('  ')),
-								$elm$parser$Parser$spaces),
-							A2(
-								$elm$parser$Parser$ignorer,
-								$elm$parser$Parser$getChompedString(
-									$elm$parser$Parser$chompWhile($elm$core$Char$isAlphaNum)),
-								$elm$parser$Parser$spaces)),
+									$elm$parser$Parser$spaces),
+								$elm$parser$Parser$chompUntil('  ')),
+							$elm$parser$Parser$spaces),
 						A2(
 							$elm$parser$Parser$ignorer,
-							$author$project$Data$CISC$Parser$parseArguments,
-							$elm$parser$Parser$chompUntilEndOr('\n'))))),
-				$elm$parser$Parser$succeed($elm$core$Maybe$Nothing)
-			]));
-}();
+							$elm$parser$Parser$getChompedString(
+								$elm$parser$Parser$chompWhile($elm$core$Char$isAlphaNum)),
+							$elm$parser$Parser$spaces)),
+					A2(
+						$elm$parser$Parser$ignorer,
+						$author$project$Data$CISC$Parser$parseArguments,
+						$elm$parser$Parser$chompUntilEndOr('\n'))))),
+			$elm$parser$Parser$succeed($elm$core$Maybe$Nothing)
+		]));
 var $elm$core$String$replace = F3(
 	function (before, after, string) {
 		return A2(
