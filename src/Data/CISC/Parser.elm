@@ -25,13 +25,12 @@ parseProgram s =
 
 parseInstruction : P.Parser (Maybe Instruction)
 parseInstruction =
-    let a = 0
-    in
     P.oneOf
         [ P.backtrackable <| P.map Just <| P.succeed Instruction
             |. P.spaces
             |. P.chompWhile Char.isHexDigit
             |. P.symbol ":"
+            |. P.spaces
             |. P.chompUntil "  "
             |. P.spaces
             |= P.getChompedString (P.chompWhile Char.isAlphaNum)
